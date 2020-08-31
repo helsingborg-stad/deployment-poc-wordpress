@@ -183,7 +183,7 @@ Resources:
                   - ecr:InitiateLayerUpload
                   - ecr:PutImage
                   - ecr:UploadLayerPart
-                Resource: !Sub "arn:aws:ecr:::${ECRRepository}/*"
+                Resource: "*"
 
   IAMRoleCodePipeline:
     Type: AWS::IAM::Role
