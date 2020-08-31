@@ -2,17 +2,13 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: A stack for the pipeline building the docker images and pushing to the ECS cluster.
 
 Parameters:
-  ProjectName:
-    Type: String
-    Default: 'poc-wp'
-    Description: Name of the project.
   GitHubOwner:
     Type: String
-    Default: 'yo-l1982'
+    Default: 'helsingborg-stad'
     Description: Owner of the github repo.
   GitHubRepo:
     Type: String
-    Default: 'poc-wp'
+    Default: 'deployment-poc-wordpress'
     Description: Name of the repo.
   GitHubBranch:
     Type: String
@@ -27,7 +23,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Ref ProjectName
+      Name: !Ref AWS::Stack
       ServiceRole: !GetAtt IAMRoleCodebuild.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -80,7 +76,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref ProjectName
+                ProjectName: !Ref AWS::Stack
               InputArtifacts: 
                 - 
                   Name: SourceOutput
@@ -180,7 +176,7 @@ Resources:
 #                  - cloudformation:DeleteChangeSet
 #                  - cloudformation:DescribeChangeSet
 #                  - cloudformation:ValidateTemplate
-#                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ProjectName}/*"
+#                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::Stack}/*"
               - Effect: Allow
                 Action:
                   - codebuild:BatchGetBuilds

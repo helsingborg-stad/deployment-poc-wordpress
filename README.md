@@ -1,4 +1,4 @@
-# POC WP
+# Deployment POC Wordpress
 Wordpress in docker POC with IAC and CI/CD pipeline using AWS.
 
 ## Local dev environment
@@ -35,7 +35,7 @@ Create the codepipeline in cloudformation using the below command in your termin
 Validate your template before creating the stack and fix any errors.
 `aws cloudformation validate-template --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml`
 
-`aws cloudformation create-stack --stack-name poc-wp-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM`
+`aws cloudformation create-stack --stack-name deployment-poc-wordpress-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM`
 
-`aws cloudformation update-stack --stack-name poc-wp-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM`
-`aws cloudformation delete-stack --stack-name poc-wp-codepipeline`
+`aws cloudformation update-stack --stack-name deployment-poc-wordpress-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM`
+`aws cloudformation delete-stack --stack-name deployment-poc-wordpress-codepipeline`
