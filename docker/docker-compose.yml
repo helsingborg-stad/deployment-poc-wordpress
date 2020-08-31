@@ -1,0 +1,20 @@
+version: "2.4"
+services:
+  php-fpm:
+    build: ./php-fpm
+    volumes:
+      - ../app:/var/www/html
+  nginx:
+    build: ./nginx
+    links:
+      - php-fpm
+    volumes_from:
+      - php-fpm
+  proxy:
+    links:
+      - nginx
+    build: ./proxy
+    ports:
+      - 80:80
+      - 443:443
+  #mariadb: TODO? 

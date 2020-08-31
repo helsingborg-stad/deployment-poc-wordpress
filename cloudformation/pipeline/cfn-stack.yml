@@ -1,0 +1,196 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A stack for the pipeline building the docker images and pushing to the ECS cluster.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: 'poc-wp'
+    Description: Name of the project.
+  GitHubOwner:
+    Type: String
+    Default: 'yo-l1982'
+    Description: Owner of the github repo.
+  GitHubRepo:
+    Type: String
+    Default: 'poc-wp'
+    Description: Name of the repo.
+  GitHubBranch:
+    Type: String
+    Default: 'master'
+    Description: Branch to react on commits.
+Resources:
+
+##
+# CodeBuild
+##
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ProjectName
+      ServiceRole: !GetAtt IAMRoleCodebuild.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: cloudformation/pipeline/buildspec.yml
+      TimeoutInMinutes: 10
+
+##
+# CodePipeline
+##
+
+  CodePipelinePipeline: # TODO Do we want to encrypt artifacts?
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt IAMRoleCodePipeline.Arn
+      Stages:
+        -
+          Name: Source
+          Actions:
+            -
+              Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: "{{resolve:secretsmanager:CodepipelineGithubAccessToken:SecretString:token}}"
+                PollForSourceChanges: false
+              OutputArtifacts:
+                - 
+                  Name: SourceOutput
+              RunOrder: 1
+        -
+          Name: Test
+          Actions:
+            -
+              Name: TestAction
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ProjectName
+              InputArtifacts: 
+                - 
+                  Name: SourceOutput
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref S3Bucket
+
+  CodePipelineWebhook:
+    Type: AWS::CodePipeline::Webhook
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: "{{resolve:secretsmanager:CodepipelineGithubAccessToken:SecretString:token}}"
+      Filters:
+        -
+          JsonPath: "$.ref"
+          MatchEquals: !Sub "refs/heads/${GitHubBranch}" # TODO Filter more specific to avoid pushes we dont care about.
+      TargetPipeline: !Ref CodePipelinePipeline
+      TargetAction: SourceAction
+      Name: AppPipelineWebhook
+      TargetPipelineVersion: !GetAtt CodePipelinePipeline.Version
+      RegisterWithThirdParty: true
+
+##
+# IAM Role
+##
+
+  IAMRoleCodebuild:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: CodeBuildPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+
+  IAMRoleCodePipeline:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: CodePipelinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+#              - Effect: Allow
+#                Action:
+#                  - cloudformation:CreateStack
+#                  - cloudformation:DescribeStacks
+#                  - cloudformation:DeleteStack
+#                  - cloudformation:UpdateStack
+#                  - cloudformation:CreateChangeSet
+#                  - cloudformation:ExecuteChangeSet
+#                  - cloudformation:DeleteChangeSet
+#                  - cloudformation:DescribeChangeSet
+#                  - cloudformation:ValidateTemplate
+#                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ProjectName}/*"
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:StopBuild
+                Resource: !GetAtt CodeBuildProject.Arn
+
+##
+# S3 Bucket
+##
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
