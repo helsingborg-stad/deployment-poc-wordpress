@@ -23,7 +23,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Ref AWS::Stack
+      Name: !Ref AWS::StackName
       ServiceRole: !GetAtt IAMRoleCodebuild.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -31,6 +31,9 @@ Resources:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: ECR_REPOSITORY_URI
+            Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
       Source:
         Type: CODEPIPELINE
         BuildSpec: cloudformation/pipeline/buildspec.yml
@@ -46,7 +49,7 @@ Resources:
       RoleArn: !GetAtt IAMRoleCodePipeline.Arn
       Stages:
         -
-          Name: Source
+          Name: GetSource
           Actions:
             -
               Name: SourceAction
@@ -66,21 +69,50 @@ Resources:
                   Name: SourceOutput
               RunOrder: 1
         -
-          Name: Test
+          Name: Build
           Actions:
             -
-              Name: TestAction
+              Name: BuildAndPushDockerImage
               ActionTypeId:
-                Category: Test
+                Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref AWS::Stack
+                ProjectName: !Ref AWS::StackName
               InputArtifacts: 
                 - 
                   Name: SourceOutput
               RunOrder: 1
+            # -
+            #   Name: Prepare source
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Ref AWS::StackName
+            #   InputArtifacts:
+            #     - 
+            #       Name: SourceOutput
+            #   RunOrder: 2
+        # -
+        #   Name: Stage Deploy
+        #   Actions:
+        #     -
+        #       Name: Build Docker Image
+        #       ActionTypeId:
+        #         Category: Build
+        #         Owner: AWS
+        #         Version: 1
+        #         Provider: CodeBuild
+        #       Configuration:
+        #         ProjectName: !Ref AWS::StackName
+        #       InputArtifacts: 
+        #         - 
+        #           Name: SourceOutput
+        #       RunOrder: 1
       ArtifactStore:
         Type: S3
         Location: !Ref S3Bucket
@@ -100,6 +132,15 @@ Resources:
       Name: AppPipelineWebhook
       TargetPipelineVersion: !GetAtt CodePipelinePipeline.Version
       RegisterWithThirdParty: true
+
+##
+# ECR
+##
+
+  ECRRepository: 
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${AWS::StackName}"
 
 ##
 # IAM Role
@@ -134,6 +175,15 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectVersion
                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+              - Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:GetAuthorizationToken
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !Sub "arn:aws:ecr:::${ECRRepository}/*"
 
   IAMRoleCodePipeline:
     Type: AWS::IAM::Role
@@ -176,7 +226,7 @@ Resources:
 #                  - cloudformation:DeleteChangeSet
 #                  - cloudformation:DescribeChangeSet
 #                  - cloudformation:ValidateTemplate
-#                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::Stack}/*"
+#                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
               - Effect: Allow
                 Action:
                   - codebuild:BatchGetBuilds
