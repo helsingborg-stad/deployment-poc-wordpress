@@ -156,10 +156,15 @@ Resources:
 # ECR
 ##
 
-  ECRRepository: 
+  ECRRepositoryPhpFpm: 
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub "${AWS::StackName}"
+      RepositoryName: !Sub "${AWS::StackName}-php-fpm"
+
+  ECRRepositoryNginx: 
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${AWS::StackName}-nginx"
 
 ##
 # IAM Role
