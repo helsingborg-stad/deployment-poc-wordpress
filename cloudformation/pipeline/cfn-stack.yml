@@ -129,6 +129,7 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-prepare-source"
+                PrimarySource: BuildNginxOutput
               InputArtifacts:
                 - 
                   Name: BuildNginxOutput
