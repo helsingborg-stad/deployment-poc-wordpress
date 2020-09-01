@@ -20,10 +20,10 @@ Resources:
 # CodeBuild
 ##
 
-  CodeBuildProject:
+  CodeBuildProjectDocker:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Ref AWS::StackName
+      Name: !Sub "${AWS::StackName}-docker"
       ServiceRole: !GetAtt IAMRoleCodebuild.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -34,7 +34,24 @@ Resources:
         PrivilegedMode: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: cloudformation/pipeline/buildspec.yml
+        BuildSpec: cloudformation/pipeline/buildspec-docker.yml
+      TimeoutInMinutes: 10
+
+  CodeBuildProjectPrepareSource:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-prepare-source"
+      ServiceRole: !GetAtt IAMRoleCodebuild.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        PrivilegedMode: true
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: cloudformation/pipeline/buildspec-prepare-source.yml
       TimeoutInMinutes: 10
 
 ##
@@ -77,7 +94,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref AWS::StackName
+                ProjectName: !Sub "${AWS::StackName}-docker"
                 EnvironmentVariables: !Sub '[{"name": "BUILD_CONTEXT", "value": "./docker/php-fpm/"},{"name": "ECR_REPOSITORY_URI", "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-php-fpm"}]'
               InputArtifacts: 
                 - 
@@ -94,7 +111,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref AWS::StackName
+                ProjectName: !Sub "${AWS::StackName}-docker"
                 EnvironmentVariables: !Sub '[{"name": "BUILD_CONTEXT", "value": "./docker/nginx/"},{"name": "ECR_REPOSITORY_URI", "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-nginx"}]'
               InputArtifacts: 
                 - 
@@ -103,19 +120,24 @@ Resources:
                 - 
                   Name: BuildNginxOutput
               RunOrder: 1
-            # -
-            #   Name: Prepare source
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CodeBuild
-            #   Configuration:
-            #     ProjectName: !Ref AWS::StackName
-            #   InputArtifacts:
-            #     - 
-            #       Name: SourceOutput
-            #   RunOrder: 2
+            -
+              Name: PrepareSource
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Sub "${AWS::StackName}-prepare-source"
+              InputArtifacts:
+                - 
+                  Name: BuildNginxOutput
+                - 
+                  Name: BuildPHPOutput
+              OutputArtifacts:
+                - 
+                  Name: SourcePrepared
+              RunOrder: 2
         # -
         #   Name: Stage Deploy
         #   Actions:
@@ -257,7 +279,13 @@ Resources:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
                   - codebuild:StopBuild
-                Resource: !GetAtt CodeBuildProject.Arn
+                Resource: !GetAtt CodeBuildProjectDocker.Arn
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:StopBuild
+                Resource: !GetAtt CodeBuildProjectPrepareSource.Arn
 
 ##
 # S3 Bucket
