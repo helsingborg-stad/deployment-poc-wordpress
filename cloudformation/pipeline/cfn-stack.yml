@@ -31,9 +31,6 @@ Resources:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
-        EnvironmentVariables:
-          - Name: ECR_REPOSITORY_URI
-            Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
         PrivilegedMode: true
       Source:
         Type: CODEPIPELINE
@@ -73,7 +70,7 @@ Resources:
           Name: Build
           Actions:
             -
-              Name: BuildAndPushDockerImage
+              Name: BuildAndPushPHPDockerImage
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -81,9 +78,30 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref AWS::StackName
+                EnvironmentVariables: !Sub '[{"name": "BUILD_CONTEXT", "value": "./docker/php-fpm/"},{"name": "ECR_REPOSITORY_URI", "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-php-fpm"}]'
               InputArtifacts: 
                 - 
                   Name: SourceOutput
+              OutputArtifacts:
+                - 
+                  Name: BuildPHPOutput
+              RunOrder: 1
+            -
+              Name: BuildAndPushNginxDockerImage
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref AWS::StackName
+                EnvironmentVariables: !Sub '[{"name": "BUILD_CONTEXT", "value": "./docker/nginx/"},{"name": "ECR_REPOSITORY_URI", "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-nginx"}]'
+              InputArtifacts: 
+                - 
+                  Name: SourceOutput
+              OutputArtifacts:
+                - 
+                  Name: BuildNginxOutput
               RunOrder: 1
             # -
             #   Name: Prepare source
