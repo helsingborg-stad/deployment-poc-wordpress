@@ -198,6 +198,7 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
+                  - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
               - Effect: Allow
                 Action:
@@ -207,7 +208,7 @@ Resources:
                   - ecr:InitiateLayerUpload
                   - ecr:PutImage
                   - ecr:UploadLayerPart
-                Resource: "*"
+                Resource: "*" # TODO More granular resources here
 
   IAMRoleCodePipeline:
     Type: AWS::IAM::Role
