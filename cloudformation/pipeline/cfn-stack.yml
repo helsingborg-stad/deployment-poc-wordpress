@@ -34,6 +34,7 @@ Resources:
         EnvironmentVariables:
           - Name: ECR_REPOSITORY_URI
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}"
+        PrivilegedMode: true
       Source:
         Type: CODEPIPELINE
         BuildSpec: cloudformation/pipeline/buildspec.yml
