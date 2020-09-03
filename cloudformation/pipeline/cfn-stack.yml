@@ -313,7 +313,7 @@ Resources:
                   - cloudformation:DeleteChangeSet
                   - cloudformation:DescribeChangeSet
                   - cloudformation:ValidateTemplate
-                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/*"
 
   IAMRoleCloudformation:
     Type: AWS::IAM::Role
@@ -340,7 +340,7 @@ Resources:
                  - logs:*
                  - ecs:*
                  - applicationautoscaling:*
-               Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
+               Resource: "*"
 
 ##
 # S3 Bucket
