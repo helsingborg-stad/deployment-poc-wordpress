@@ -302,6 +302,18 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:StopBuild
                 Resource: !GetAtt CodeBuildProjectPrepareSource.Arn
+              - Effect: Allow
+                Action:
+                  - cloudformation:CreateStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DeleteStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:DeleteChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:ValidateTemplate
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
 
   IAMRoleCloudformation:
     Type: AWS::IAM::Role
@@ -323,15 +335,11 @@ Resources:
             Statement:
              - Effect: Allow
                Action:
-                 - cloudformation:CreateStack
-                 - cloudformation:DescribeStacks
-                 - cloudformation:DeleteStack
-                 - cloudformation:UpdateStack
-                 - cloudformation:CreateChangeSet
-                 - cloudformation:ExecuteChangeSet
-                 - cloudformation:DeleteChangeSet
-                 - cloudformation:DescribeChangeSet
-                 - cloudformation:ValidateTemplate
+                 - iam:*
+                 - ec2:*
+                 - logs:*
+                 - ecs:*
+                 - applicationautoscaling:*
                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
 
 ##
