@@ -133,8 +133,8 @@ Resources:
                 Capabilities: CAPABILITY_IAM
                 RoleArn: !GetAtt IAMRoleCloudformation.Arn
                 StackName: deployment-poc-wordpress-stage
-                #TemplateConfiguration: TemplateSource::test-configuration.json
-                TemplatePath: TemplateSource::cloudformation/app/cfn-stack.yml
+                #TemplateConfiguration: SourceOutput::test-configuration.json
+                TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
                 ParameterOverrides: |
                   {
                     "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
@@ -146,7 +146,7 @@ Resources:
                 - Name: BuildNginxOutput
               RunOrder: '1'
             # -
-            #   Name: PrepareSource
+            #   Name: IntegrationTest
             #   ActionTypeId:
             #     Category: Build
             #     Owner: AWS
@@ -166,22 +166,7 @@ Resources:
             #     - 
             #       Name: SourcePrepared
             #   RunOrder: 2
-        # -
-        #   Name: Stage Deploy
-        #   Actions:
-        #     -
-        #       Name: Build Docker Image
-        #       ActionTypeId:
-        #         Category: Build
-        #         Owner: AWS
-        #         Version: 1
-        #         Provider: CodeBuild
-        #       Configuration:
-        #         ProjectName: !Ref AWS::StackName
-        #       InputArtifacts: 
-        #         - 
-        #           Name: SourceOutput
-        #       RunOrder: 1
+
       ArtifactStore:
         Type: S3
         Location: !Ref S3Bucket
