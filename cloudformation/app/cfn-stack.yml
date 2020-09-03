@@ -149,18 +149,6 @@ Resources:
       Memory: 512
       NetworkMode: bridge
       ContainerDefinitions:
-        - Name: nginx
-          Image: !Ref NginxImage
-          Links: 
-            - php-fpm
-          PortMappings:
-            - ContainerPort: 80
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-region: !Ref AWS::Region
-              awslogs-group: !Ref LogsLogGroup
-              awslogs-stream-prefix: nginx
         - Name: php-fpm
           Image: !Ref PHPFPMImage
           PortMappings:
@@ -171,6 +159,20 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogsLogGroup
               awslogs-stream-prefix: php-fpm
+        - Name: nginx
+          Image: !Ref NginxImage
+          Links: 
+            - php-fpm
+          VolumesFrom:
+            - SourceContainer: php-fpm
+          PortMappings:
+            - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogsLogGroup
+              awslogs-stream-prefix: nginx
 
 ##
 # ApplicationAutoScaling
