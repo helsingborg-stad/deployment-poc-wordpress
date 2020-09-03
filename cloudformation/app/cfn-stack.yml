@@ -150,7 +150,7 @@ Resources:
       NetworkMode: bridge
       ContainerDefinitions:
         - Name: nginx
-          Image: nginx:latest
+          Image: !Ref NginxImage
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:
@@ -159,6 +159,16 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogsLogGroup
               awslogs-stream-prefix: nginx
+        - Name: php-fpm
+          Image: !Ref PHPFPMImage
+          PortMappings:
+            - ContainerPort: 9000
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogsLogGroup
+              awslogs-stream-prefix: php-fpm
 
 ##
 # ApplicationAutoScaling

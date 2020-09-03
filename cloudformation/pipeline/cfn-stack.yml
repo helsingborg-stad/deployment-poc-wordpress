@@ -348,7 +348,7 @@ Resources:
                  - ec2:*
                  - logs:*
                  - ecs:*
-                 - applicationautoscaling:*
+                 - application-autoscaling:*
                  - elasticloadbalancing:*
                Resource: "*"
 
