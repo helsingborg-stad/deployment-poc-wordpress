@@ -309,6 +309,10 @@ Resources:
                 Resource: !GetAtt CodeBuildProjectPrepareSource.Arn
               - Effect: Allow
                 Action:
+                  - iam:PassRole
+                Resource: !GetAtt IAMRoleCloudformation.Arn
+              - Effect: Allow
+                Action:
                   - cloudformation:CreateStack
                   - cloudformation:DescribeStacks
                   - cloudformation:DeleteStack
