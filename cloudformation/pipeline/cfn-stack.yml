@@ -120,27 +120,52 @@ Resources:
                 - 
                   Name: BuildNginxOutput
               RunOrder: 1
-            -
-              Name: PrepareSource
+        - Name: Stage
+          Actions:
+            - Name: CloudFormationCreate
               ActionTypeId:
-                Category: Build
+                Category: Deploy
                 Owner: AWS
-                Version: 1
-                Provider: CodeBuild
+                Provider: CloudFormation
+                Version: '1'
               Configuration:
-                ProjectName: !Sub "${AWS::StackName}-prepare-source"
-                PrimarySource: SourceOutput
+                ActionMode: CREATE_UPDATE
+                Capabilities: CAPABILITY_IAM
+                RoleArn: !GetAtt IAMRoleCloudformation.Arn
+                StackName: deployment-poc-wordpress-stage
+                #TemplateConfiguration: TemplateSource::test-configuration.json
+                TemplatePath: TemplateSource::cloudformation/app/cfn-stack.yml
+                ParameterOverrides: |
+                  {
+                    "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
+                    "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
+                  }
               InputArtifacts:
-                - 
-                  Name: BuildNginxOutput
-                - 
-                  Name: BuildPHPOutput
-                - 
-                  Name: SourceOutput
-              OutputArtifacts:
-                - 
-                  Name: SourcePrepared
-              RunOrder: 2
+                - Name: SourceOutput
+                - Name: BuildPHPOutput
+                - Name: BuildNginxOutput
+              RunOrder: '1'
+            # -
+            #   Name: PrepareSource
+            #   ActionTypeId:
+            #     Category: Build
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: CodeBuild
+            #   Configuration:
+            #     ProjectName: !Sub "${AWS::StackName}-prepare-source"
+            #     PrimarySource: SourceOutput
+            #   InputArtifacts:
+            #     - 
+            #       Name: BuildNginxOutput
+            #     - 
+            #       Name: BuildPHPOutput
+            #     - 
+            #       Name: SourceOutput
+            #   OutputArtifacts:
+            #     - 
+            #       Name: SourcePrepared
+            #   RunOrder: 2
         # -
         #   Name: Stage Deploy
         #   Actions:
@@ -265,18 +290,6 @@ Resources:
                   - s3:GetObjectVersion
                   - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
-#              - Effect: Allow
-#                Action:
-#                  - cloudformation:CreateStack
-#                  - cloudformation:DescribeStacks
-#                  - cloudformation:DeleteStack
-#                  - cloudformation:UpdateStack
-#                  - cloudformation:CreateChangeSet
-#                  - cloudformation:ExecuteChangeSet
-#                  - cloudformation:DeleteChangeSet
-#                  - cloudformation:DescribeChangeSet
-#                  - cloudformation:ValidateTemplate
-#                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
               - Effect: Allow
                 Action:
                   - codebuild:BatchGetBuilds
@@ -289,6 +302,37 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:StopBuild
                 Resource: !GetAtt CodeBuildProjectPrepareSource.Arn
+
+  IAMRoleCloudformation:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - cloudformation.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: CodePipelinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+             - Effect: Allow
+               Action:
+                 - cloudformation:CreateStack
+                 - cloudformation:DescribeStacks
+                 - cloudformation:DeleteStack
+                 - cloudformation:UpdateStack
+                 - cloudformation:CreateChangeSet
+                 - cloudformation:ExecuteChangeSet
+                 - cloudformation:DeleteChangeSet
+                 - cloudformation:DescribeChangeSet
+                 - cloudformation:ValidateTemplate
+               Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
 
 ##
 # S3 Bucket

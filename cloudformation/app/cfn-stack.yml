@@ -1,6 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Wordpress poc resources stack.
 
+Parameters:
+  PHPFPMImage:
+    Type: String
+    Default: 'php:7.4-fpm'
+    Description: Image for php-fpm. (Overridden in codepipeline)
+  NginxImage:
+    Type: String
+    Default: 'nginx:latest'
+    Description: Image for nginx. (Overridden in codepipeline)
+
 Resources:
 
 ##
