@@ -151,7 +151,8 @@ Resources:
       ContainerDefinitions:
         - Name: nginx
           Image: !Ref NginxImage
-          Links: php-fpm
+          Links: 
+            - php-fpm
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:
@@ -162,7 +163,8 @@ Resources:
               awslogs-stream-prefix: nginx
         - Name: php-fpm
           Image: !Ref PHPFPMImage
-          Links: nginx
+          Links: 
+            - nginx
           PortMappings:
             - ContainerPort: 9000
           LogConfiguration:
