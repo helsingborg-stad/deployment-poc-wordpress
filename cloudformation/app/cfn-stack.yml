@@ -163,8 +163,6 @@ Resources:
               awslogs-stream-prefix: nginx
         - Name: php-fpm
           Image: !Ref PHPFPMImage
-          Links: 
-            - nginx
           PortMappings:
             - ContainerPort: 9000
           LogConfiguration:
