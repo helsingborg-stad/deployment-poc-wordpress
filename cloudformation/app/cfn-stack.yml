@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Wordpress poc resources stack.
+
+Resources:
+
+##
+# EC2
+##   
+
+  ECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ECS task security group
+      GroupName: !Sub "${AWS::StackName}-ecs-task-sg"
+      VpcId:
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
+          IpProtocol: -1
+
+  EC2SecurityGroupPublicLoadBalancer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the public facing load balancer
+      VpcId: 
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+
+  EC2SecurityGroupIngressPublicALB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Ingress from the public ALB
+      GroupId: 
+        Fn::ImportValue: infrastructure-poc-wordpress-ecs-EC2SecurityGroupECSHost
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
+
+##
+# IAM
+##      
+
+  IAMRoleTaskExecution:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-ecs-task-execution-role-policy"
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:BatchGetImage"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                  - "secretsmanager:GetSecretValue"
+                Resource: "*"
+
+  IAMRoleTaskDefinition:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+
+  IAMRoleAutoScaling:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [application-autoscaling.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:UpdateService
+                  - cloudwatch:PutMetricAlarm
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:DeleteAlarms
+                Resource:
+                  - "*"
+
+##
+# Logs
+##
+
+  LogsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${AWS::StackName}"
+      RetentionInDays: 14
+
+##
+# ECS
+##
+
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ElasticLoadBalancingV2Listener
+    Properties:
+      Cluster:
+        Fn::ImportValue: infrastructure-poc-wordpress-ecs-ClusterName
+      ServiceName: !Sub "${AWS::StackName}"
+      HealthCheckGracePeriodSeconds: 60
+      # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
+      TaskDefinition: !Ref ECSTaskDefinition
+      DesiredCount: 1
+      LoadBalancers:
+        - ContainerName: nginx
+          ContainerPort: 80
+          TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
+
+  ECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ExecutionRoleArn: !Ref IAMRoleTaskExecution
+      TaskRoleArn: !Ref IAMRoleTaskDefinition
+      Family: !Sub "${AWS::StackName}"
+      Cpu: 256
+      Memory: 512
+      NetworkMode: bridge
+      ContainerDefinitions:
+        - Name: nginx
+          Image: nginx:latest
+          PortMappings:
+            - ContainerPort: 80
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-region: !Ref AWS::Region
+              awslogs-group: !Ref LogsLogGroup
+              awslogs-stream-prefix: nginx
+
+##
+# ApplicationAutoScaling
+##
+
+  ScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn: ECSService
+    Properties:
+      RoleARN: !GetAtt IAMRoleAutoScaling.Arn
+      ResourceId: !Sub
+        - "service/${ClusterName}/${ECSService.Name}"
+        - ClusterName: 
+            Fn::ImportValue: infrastructure-poc-wordpress-ecs-ClusterName
+      ServiceNamespace: ecs
+      ScalableDimension: ecs:service:DesiredCount
+      MinCapacity: 1
+      MaxCapacity: 5
+
+  ScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 75.0
+
+##
+# ElasticLoadBalancingV2
+##
+
+  ElasticLoadBalancingV2LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: 30
+      Subnets:
+        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
+      SecurityGroups: 
+        - !Ref EC2SecurityGroupPublicLoadBalancer
+
+  ElasticLoadBalancingV2Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DependsOn:
+      - ElasticLoadBalancingV2LoadBalancer
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
+          Type: forward
+      LoadBalancerArn: !Ref ElasticLoadBalancingV2LoadBalancer
+      Port: 80
+      Protocol: HTTP
+        
+  ElasticLoadBalancingV2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 6
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: 
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID

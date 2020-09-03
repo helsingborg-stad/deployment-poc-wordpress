@@ -1,19 +1,8 @@
-[
-    {
-        "ParameterKey": "string",
-        "ParameterValue": "string"
-    },
-    {
-        "ParameterKey": "string",
-        "ParameterValue": "string"
-    }
-]
-
 {
     "Parameters": {
-        "NameOfTemplateParameter": "ValueOfParameter",
+        "NameOfTemplateParameter": "ValueOfParameter"
     },
     "Tags": {
-        "TagKey": "TagValue",
+        "TagKey": "TagValue"
     }
 }
