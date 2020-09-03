@@ -122,7 +122,7 @@ Resources:
               RunOrder: 1
         - Name: Stage
           Actions:
-            - Name: CloudFormationCreate
+            - Name: CreateStage
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
@@ -134,7 +134,7 @@ Resources:
                 RoleArn: !GetAtt IAMRoleCloudformation.Arn
                 StackName: deployment-poc-wordpress-stage
                 #TemplateConfiguration: SourceOutput::test-configuration.json
-                TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
+                TemplatePath: SourceOutput::./cloudformation/app/cfn-stack.yml
                 ParameterOverrides: |
                   {
                     "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
