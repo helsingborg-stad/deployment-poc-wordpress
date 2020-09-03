@@ -1,19 +1,14 @@
 [
     {
-        "ParameterKey": "string",
-        "ParameterValue": "string"
+        "ParameterKey": "GitHubOwner",
+        "ParameterValue": "helsingborg-stad"
     },
     {
-        "ParameterKey": "string",
-        "ParameterValue": "string"
+        "ParameterKey": "GitHubRepo",
+        "ParameterValue": "deployment-poc-wordpress"
+    },
+    {
+        "ParameterKey": "GitHubBranch",
+        "ParameterValue": "master"
     }
 ]
-
-{
-    "Parameters": {
-        "NameOfTemplateParameter": "ValueOfParameter",
-    },
-    "Tags": {
-        "TagKey": "TagValue",
-    }
-}

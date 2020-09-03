@@ -1,8 +1,9 @@
 {
     "Parameters": {
-        "NameOfTemplateParameter": "ValueOfParameter"
+        "PHPFPMImage": "php:7.4-fpm",
+        "NginxImage": "nginx:latest"
     },
     "Tags": {
-        "TagKey": "TagValue"
+        "Billing": "wp-poc-wordpress"
     }
 }

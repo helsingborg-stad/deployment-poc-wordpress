@@ -95,7 +95,17 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-docker"
-                EnvironmentVariables: !Sub '[{"name": "BUILD_CONTEXT", "value": "./docker/php-fpm/"},{"name": "ECR_REPOSITORY_URI", "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-php-fpm"}]'
+                EnvironmentVariables: !Sub |
+                  [
+                    {
+                      "name": "BUILD_CONTEXT",
+                      "value": "./docker/php-fpm/"
+                    },
+                    {
+                      "name": "ECR_REPOSITORY_URI",
+                      "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-php-fpm"
+                    }
+                  ]
               InputArtifacts: 
                 - 
                   Name: SourceOutput
@@ -112,7 +122,17 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-docker"
-                EnvironmentVariables: !Sub '[{"name": "BUILD_CONTEXT", "value": "./docker/nginx/"},{"name": "ECR_REPOSITORY_URI", "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-nginx"}]'
+                EnvironmentVariables: !Sub |
+                  [
+                    {
+                      "name": "BUILD_CONTEXT",
+                      "value": "./docker/nginx/"
+                    },
+                    {
+                      "name": "ECR_REPOSITORY_URI",
+                      "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-nginx"
+                    }
+                  ]
               InputArtifacts: 
                 - 
                   Name: SourceOutput
@@ -138,7 +158,7 @@ Resources:
                 ParameterOverrides: |
                   {
                     "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                    "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
+                    "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]}
                   }
               InputArtifacts:
                 - Name: SourceOutput
