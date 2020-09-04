@@ -3,7 +3,7 @@ services:
   php-fpm:
     build: ./php-fpm
     volumes:
-      - ../app:/var/www/html
+      - ./php-fpm/app:/var/www/html
   nginx:
     build: ./nginx
     links:

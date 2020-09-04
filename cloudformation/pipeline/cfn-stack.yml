@@ -37,10 +37,10 @@ Resources:
         BuildSpec: cloudformation/pipeline/buildspec-docker.yml
       TimeoutInMinutes: 10
 
-  CodeBuildProjectPrepareSource:
+  CodeBuildProjectIntegrationTest:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${AWS::StackName}-prepare-source"
+      Name: !Sub "${AWS::StackName}-integration-test"
       ServiceRole: !GetAtt IAMRoleCodebuild.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -51,7 +51,7 @@ Resources:
         PrivilegedMode: true
       Source:
         Type: CODEPIPELINE
-        BuildSpec: cloudformation/pipeline/buildspec-prepare-source.yml
+        BuildSpec: cloudformation/pipeline/buildspec-integration-test.yml
       TimeoutInMinutes: 10
 
 ##
@@ -147,13 +147,14 @@ Resources:
                 Category: Deploy
                 Owner: AWS
                 Provider: CloudFormation
-                Version: '1'
+                Version: 1
               Configuration:
                 ActionMode: CREATE_UPDATE
                 Capabilities: CAPABILITY_IAM
                 RoleArn: !GetAtt IAMRoleCloudformation.Arn
+                OutputFileName: stack-output-stage.json
                 StackName: deployment-poc-wordpress-stage
-                #TemplateConfiguration: SourceOutput::test-configuration.json
+                TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-stage.yml
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
                 ParameterOverrides: |
                   {
@@ -164,29 +165,49 @@ Resources:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput
                 - Name: BuildNginxOutput
-              RunOrder: '1'
-            # -
-            #   Name: IntegrationTest
-            #   ActionTypeId:
-            #     Category: Build
-            #     Owner: AWS
-            #     Version: 1
-            #     Provider: CodeBuild
-            #   Configuration:
-            #     ProjectName: !Sub "${AWS::StackName}-prepare-source"
-            #     PrimarySource: SourceOutput
-            #   InputArtifacts:
-            #     - 
-            #       Name: BuildNginxOutput
-            #     - 
-            #       Name: BuildPHPOutput
-            #     - 
-            #       Name: SourceOutput
-            #   OutputArtifacts:
-            #     - 
-            #       Name: SourcePrepared
-            #   RunOrder: 2
-
+              OutputArtifacts:
+                - Name: StackStageOutput
+              RunOrder: 1
+            -
+              Name: IntegrationTest
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Sub "${AWS::StackName}-integration-test"
+                EnvironmentVariables: !Sub [{"name": "STAGE_HOST","value": "./docker/nginx/"}] // TODO Fix getparam in here
+                PrimarySource: SourceOutput
+              InputArtifacts:
+                - 
+                  Name: SourceOutput
+              RunOrder: 2
+        - Name: Production
+          Actions:
+            - Name: CreateProduction
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                Capabilities: CAPABILITY_IAM
+                RoleArn: !GetAtt IAMRoleCloudformation.Arn
+                StackName: deployment-poc-wordpress-prod
+                TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-prod.yml
+                TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
+                ParameterOverrides: |
+                  {
+                    "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
+                    "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]}
+                  }
+              InputArtifacts:
+                - Name: SourceOutput
+                - Name: BuildPHPOutput
+                - Name: BuildNginxOutput
+              RunOrder: 1
       ArtifactStore:
         Type: S3
         Location: !Ref S3Bucket
