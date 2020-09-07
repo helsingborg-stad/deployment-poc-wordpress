@@ -177,7 +177,7 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-integration-test"
-                EnvironmentVariables: !Sub [{"name": "STAGE_HOST","value": "./docker/nginx/"}] // TODO Fix getparam in here
+                EnvironmentVariables: '[{"name": "STAGE_HOST","value": "https://www.google.se"}]' # TODO Fix getparam in here
                 PrimarySource: SourceOutput
               InputArtifacts:
                 - 
@@ -327,7 +327,7 @@ Resources:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
                   - codebuild:StopBuild
-                Resource: !GetAtt CodeBuildProjectPrepareSource.Arn
+                Resource: !GetAtt CodeBuildProjectIntegrationTest.Arn
               - Effect: Allow
                 Action:
                   - iam:PassRole
