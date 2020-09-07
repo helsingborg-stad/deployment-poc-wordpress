@@ -1,7 +1,8 @@
 {
     "Parameters": {
         "PHPFPMImage": "php:7.4-fpm",
-        "NginxImage": "nginx:latest"
+        "NginxImage": "nginx:latest",
+        "Environment": "stage"
     },
     "Tags": {
         "Billing": "wp-poc-wordpress"

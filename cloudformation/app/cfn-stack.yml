@@ -10,7 +10,10 @@ Parameters:
     Type: String
     Default: 'nginx:latest'
     Description: Image for nginx. (Overridden in codepipeline)
-
+  Environment:
+    Type: String
+    Default: 'stage'
+    Description: Environment name.
 Resources:
 
 ##
