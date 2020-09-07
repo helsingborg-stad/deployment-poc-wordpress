@@ -185,6 +185,14 @@ Resources:
               RunOrder: 2
         - Name: Production
           Actions:
+            -
+              Name: ApprovalStage
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Version: 1
+                Provider: Manual
+                # TODO notification
             - Name: CreateProduction
               ActionTypeId:
                 Category: Deploy
@@ -207,7 +215,7 @@ Resources:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput
                 - Name: BuildNginxOutput
-              RunOrder: 1
+              RunOrder: 2
       ArtifactStore:
         Type: S3
         Location: !Ref S3Bucket
