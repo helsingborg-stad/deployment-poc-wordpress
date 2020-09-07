@@ -10,4 +10,4 @@ phases:
       - yarn install
   build:
     commands:
-      - yarn test
+      - yarn integration-test
