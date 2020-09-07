@@ -154,7 +154,7 @@ Resources:
                 RoleArn: !GetAtt IAMRoleCloudformation.Arn
                 OutputFileName: stack-output-stage.json
                 StackName: deployment-poc-wordpress-stage
-                TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-stage.yml
+                TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-stage.json
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
                 ParameterOverrides: |
                   {
@@ -196,7 +196,7 @@ Resources:
                 Capabilities: CAPABILITY_IAM
                 RoleArn: !GetAtt IAMRoleCloudformation.Arn
                 StackName: deployment-poc-wordpress-prod
-                TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-prod.yml
+                TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-prod.json
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
                 ParameterOverrides: |
                   {
