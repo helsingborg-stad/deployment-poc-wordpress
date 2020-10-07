@@ -1,15 +1,17 @@
-version: "2.4"
+version: "3.7"
 services:
   php-fpm:
     build: ./php-fpm
     volumes:
-      - ./php-fpm/app:/var/www/html
+      - code:/var/www/html
+      # - ./php-fpm/app:/var/www/html
   nginx:
     build: ./nginx
     links:
       - php-fpm
-    volumes_from:
-      - php-fpm
+    volumes:
+      - code:/var/www/html
+      # - ./php-fpm/app:/var/www/html
   proxy:
     links:
       - nginx
@@ -18,3 +20,21 @@ services:
       - 80:80
       - 443:443
   #mariadb: TODO? 
+
+volumes:
+  code:
+
+x-mutagen:
+  sync:
+    defaults:
+      permissions:
+        defaultFileMode: 0666
+        defaultDirectoryMode: 0777
+    wp:
+      ignore:
+        vcs: true
+        paths: # exclude the junk we don't need from being synced
+          - "**/node_modules/**"
+      alpha: "./php-fpm/app"
+      beta: "volume://code"
+      mode: "two-way-safe"

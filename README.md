@@ -43,6 +43,7 @@ The key name and secret name should match the [Dynamic reference](https://docs.a
 * Choose `Next` to skip rotation.
 * Review and choose `Store`to save the token.
 
+
 ### Cloudformation
 The cloudformation template is located in `cloudformation/pipeline/cfn-stack.yml`.  
 The parameters used is located in `cloudformation/pipeline/cfn-stack.parameters.json`.  
