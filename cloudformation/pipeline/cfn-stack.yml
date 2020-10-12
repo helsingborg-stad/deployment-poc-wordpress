@@ -327,6 +327,7 @@ Resources:
                   - ecr:InitiateLayerUpload
                   - ecr:PutImage
                   - ecr:UploadLayerPart
+                  - ecr:BatchGetImage
                 Resource: "*" # TODO More granular resources here
 
   IAMRoleCodePipeline:
