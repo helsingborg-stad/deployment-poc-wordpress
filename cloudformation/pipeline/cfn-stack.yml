@@ -312,7 +312,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
-                Resource: "" #TODO More granular resources here
+                Resource: "*" #TODO More granular resources here
               - Effect: Allow
                 Action:
                   - s3:GetObject
