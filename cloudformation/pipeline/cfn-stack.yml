@@ -29,10 +29,10 @@ Resources:
 # CodeBuild
 ##
 
-  CodeBuildProjectDocker:
+  CodeBuildProjectDockerNginx:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${AWS::StackName}-docker"
+      Name: !Sub "${AWS::StackName}-docker-nginx"
       ServiceRole: !GetAtt IAMRoleCodebuild.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -44,6 +44,23 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: cloudformation/pipeline/buildspec-docker.yml
+      TimeoutInMinutes: 10
+
+  CodeBuildProjectDockerPhpFpm:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-docker-phpfpm"
+      ServiceRole: !GetAtt IAMRoleCodebuild.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        PrivilegedMode: true
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: cloudformation/pipeline/buildspec-docker-app.yml
       TimeoutInMinutes: 10
 
   CodeBuildProjectIntegrationTest:
@@ -103,7 +120,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Sub "${AWS::StackName}-docker"
+                ProjectName: !Sub "${AWS::StackName}-docker-phpfpm"
                 EnvironmentVariables: !Sub |
                   [
                     {
@@ -135,7 +152,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Sub "${AWS::StackName}-docker"
+                ProjectName: !Sub "${AWS::StackName}-docker-nginx"
                 EnvironmentVariables: !Sub |
                   [
                     {
