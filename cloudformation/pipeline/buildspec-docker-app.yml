@@ -17,7 +17,7 @@ phases:
       - echo Building the Docker image...
       - docker pull $ECR_REPOSITORY_URI:base || true
       - docker build -t $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:base --target base $BUILD_CONTEXT
-      - docker build -t --build-arg NPM_TOKEN=$NPM_TOKEN $ECR_REPOSITORY_URI:latest --cache-from $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:latest --target app $BUILD_CONTEXT 
+      - docker build --build-arg NPM_TOKEN=$NPM_TOKEN -t $ECR_REPOSITORY_URI:latest --cache-from $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:latest --target app $BUILD_CONTEXT 
       - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
