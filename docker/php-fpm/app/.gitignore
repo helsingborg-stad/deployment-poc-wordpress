@@ -1,0 +1,64 @@
+# Config #
+##########
+/config/cache.php
+/config/developer.php
+
+
+# Municipio dependencies #
+##########################
+wp/
+srdb/
+vendor/
+wp-content/*
+wp-content/plugins/*
+!wp-content/plugins
+!wp-content/mu-plugins
+!wp-content/mu-plugins/*
+wp-content/mu-plugins/attachmentDownloader.php
+!wp-content/object-cache.php
+!wp-content/plugins/vizzit-analytics
+
+# Themes dependencies #
+##########################
+wp-content/themes/*
+!wp-content/themes
+!wp-content/themes/helsingborg
+wp-content/themes/helsingborg/node_modules
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

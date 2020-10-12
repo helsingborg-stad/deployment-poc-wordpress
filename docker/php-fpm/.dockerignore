@@ -1,0 +1,8 @@
+**/node_modules/**
+app/wp
+app/wp-content/uploads
+app/wp-content/plugins
+app/wp-content/themes
+!app/wp-content/themes/helsingborg
+!app/wp-content/plugins/vizzit-analytics
+app/vendor

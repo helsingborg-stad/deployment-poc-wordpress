@@ -2,9 +2,22 @@
     "Parameters": {
         "PHPFPMImage": "php:7.4-fpm",
         "NginxImage": "nginx:latest",
-        "Environment": "prod"
+        "Environment": "prod",
+        "Secret_WP_DB_NAME": "helsingborg.se-prod.Secret_WP_DB_NAME",
+        "Secret_WP_DB_USER": "helsingborg.se-prod.Secret_WP_DB_USER",
+        "Secret_WP_DB_PASSWORD": "helsingborg.se-prod.Secret_WP_DB_PASSWORD",
+        "Secret_WP_AUTH_KEY": "helsingborg.se-prod.Secret_WP_AUTH_KEY",
+        "Secret_WP_SECURE_AUTH_KEY": "helsingborg.se-prod.Secret_WP_SECURE_AUTH_KEY",
+        "Secret_WP_LOGGED_IN_KEY": "helsingborg.se-prod.Secret_WP_LOGGED_IN_KEY",
+        "Secret_WP_NONCE_KEY": "helsingborg.se-prod.Secret_WP_NONCE_KEY",
+        "Secret_WP_AUTH_SALT": "helsingborg.se-prod.Secret_WP_AUTH_SALT",
+        "Secret_WP_SECURE_AUTH_SALT": "helsingborg.se-prod.Secret_WP_SECURE_AUTH_SALT",
+        "Secret_WP_LOGGED_IN_SALT": "helsingborg.se-prod.Secret_WP_LOGGED_IN_SALT",
+        "Secret_WP_NONCE_SALT": "helsingborg.se-prod.Secret_WP_NONCE_SALT"
     },
     "Tags": {
         "Billing": "wp-poc-wordpress"
     }
 }
+
+

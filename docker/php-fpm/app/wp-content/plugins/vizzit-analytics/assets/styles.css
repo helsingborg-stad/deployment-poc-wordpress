@@ -1,0 +1,58 @@
+/*
+ * va_styles
+ */
+
+
+/*
+tr:first-child th, tr:first-child td {
+  border-top: 1px solid #969;
+}
+tr.va_row th {
+  text-align: right;
+}
+*/
+
+
+/* small fix */
+td input[type=checkbox] {
+  margin-top: 5px;
+}
+
+
+td.va_desc {
+  font-weight: normal;
+  font-size: 13px;
+  line-height: 13px;
+  color: #666;
+}
+tr.va_row {
+  margin: 5px 0 0 0;
+  padding: 5px 0 0 0;
+}
+tr.va_row.even {
+  background-color: #f6f6f6;
+}
+
+tr.va_row th {
+  font-weight: bold;
+  color: #636;
+}
+
+.va_history_status_ok {
+  background-color: #25b61a;
+  color: #fff;
+  text-align: center;
+  font-weight: bold;
+}
+.va_history_status_warning {
+  background-color: #f60;
+  color: #fff;
+  text-align: center;
+  font-weight: bold;
+}
+.va_history_status_failed {
+  background-color: #900;
+  color: #fff;
+  text-align: center;
+  font-weight: bold;
+}
