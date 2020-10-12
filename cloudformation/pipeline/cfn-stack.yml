@@ -311,6 +311,10 @@ Resources:
                 Resource: "arn:aws:logs:*:*:*"
               - Effect: Allow
                 Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "" #TODO More granular resources here
+              - Effect: Allow
+                Action:
                   - s3:GetObject
                   - s3:GetObjectVersion
                   - s3:PutObject
