@@ -61,7 +61,7 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: cloudformation/pipeline/buildspec-docker-app.yml
-      TimeoutInMinutes: 10
+      TimeoutInMinutes: 20
 
   CodeBuildProjectIntegrationTest:
     Type: AWS::CodeBuild::Project
