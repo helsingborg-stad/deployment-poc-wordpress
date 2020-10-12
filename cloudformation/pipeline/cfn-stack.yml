@@ -14,11 +14,11 @@ Parameters:
     Type: String
     Default: 'master'
     Description: Branch to react on commits.
-  Secret_NPM_TOKEN:
+  SecretNpmToken:
     Type: String
     Default: 'helsingborg.se.Secret_NPM_TOKEN'
     Description: Variable name for secret NPM_TOKEN.
-  Secret_GITHUB_ACCESS_TOKEN:
+  SecretGithubAccessToken:
     Type: String
     Default: 'helsingborg.se.Secret_GITHUB_ACCESS_TOKEN'
     Description: Variable name for secret GITHUB_ACCESS_TOKEN.
@@ -49,7 +49,7 @@ Resources:
   CodeBuildProjectDockerPhpFpm:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${AWS::StackName}-docker-phpfpm"
+      Name: !Sub "${AWS::StackName}-docker-php-fpm"
       ServiceRole: !GetAtt IAMRoleCodebuild.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -120,7 +120,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Sub "${AWS::StackName}-docker-phpfpm"
+                ProjectName: !Sub "${AWS::StackName}-docker-php-fpm"
                 EnvironmentVariables: !Sub |
                   [
                     {
@@ -134,7 +134,7 @@ Resources:
                     {
                       "name": "NPM_TOKEN",
                       "type": "SECRETS_MANAGER",
-                      "value": "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_NPM_TOKEN}"
+                      "value": "NpmTokenSecret:NPM_TOKEN"
                     }
                   ]
               InputArtifacts: 
@@ -360,7 +360,13 @@ Resources:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
                   - codebuild:StopBuild
-                Resource: !GetAtt CodeBuildProjectDocker.Arn
+                Resource: !GetAtt CodeBuildProjectDockerPhpFpm.Arn
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                  - codebuild:StopBuild
+                Resource: !GetAtt CodeBuildProjectDockerNginx.Arn
               - Effect: Allow
                 Action:
                   - codebuild:BatchGetBuilds

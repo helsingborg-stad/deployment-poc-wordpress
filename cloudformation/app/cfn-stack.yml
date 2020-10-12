@@ -14,39 +14,10 @@ Parameters:
     Type: String
     Default: 'stage'
     Description: Environment name.
-  Secret_WP_DB_NAME:
+  SecretsArn:
     Type: String
-    Description: Variable name for DB name secret value.
-  Secret_WP_DB_USER:
-    Type: String
-    Description: Variable name for DB user secret value.
-  Secret_WP_DB_PASSWORD:
-    Type: String
-    Description: Variable name for DB password secret value.
-  Secret_WP_AUTH_KEY:
-    Type: String
-    Description: Variable name for wp auth key secret value.
-  Secret_WP_SECURE_AUTH_KEY:
-    Type: String
-    Description: Variable name for wp secure auth key secret value.
-  Secret_WP_LOGGED_IN_KEY:
-    Type: String
-    Description: Variable name for wp logged in key secret value.
-  Secret_WP_NONCE_KEY:
-    Type: String
-    Description: Variable name for wp nounce key secret value.
-  Secret_WP_AUTH_SALT:
-    Type: String
-    Description: Variable name for wp auth salt secret value.
-  Secret_WP_SECURE_AUTH_SALT:
-    Type: String
-    Description: Variable name for wp secure auth salt secret value.
-  Secret_WP_LOGGED_IN_SALT:
-    Type: String
-    Description: Variable name for wp logged in salt secret value.
-  Secret_WP_NONCE_SALT:
-    Type: String
-    Description: Variable name for wp nounce salt secret value.
+    Description: Secrets container ARN.
+
 Resources:
 
 ##
@@ -197,27 +168,27 @@ Resources:
               awslogs-stream-prefix: php-fpm
           Secrets:
             - Name: WP_DB_NAME
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_DB_NAME}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_DB_USER
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_DB_USER}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_DB_PASSWORD
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_DB_PASSWORD}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_AUTH_KEY
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_AUTH_KEY}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_SECURE_AUTH_KEY
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_SECURE_AUTH_KEY}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_LOGGED_IN_KEY
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_LOGGED_IN_KEY}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_NONCE_KEY
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_NONCE_KEY}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_AUTH_SALT
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_AUTH_SALT}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_SECURE_AUTH_SALT
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_SECURE_AUTH_SALT}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_LOGGED_IN_SALT
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_LOGGED_IN_SALT}"
+              ValueFrom: !Ref SecretsArn
             - Name: WP_NONCE_SALT
-              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:${Secret_WP_NONCE_SALT}"
+              ValueFrom: !Ref SecretsArn
         - Name: nginx
           Image: !Ref NginxImage
           Links: 
