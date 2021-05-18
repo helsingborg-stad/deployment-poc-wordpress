@@ -4,19 +4,16 @@ Description: Wordpress poc resources stack.
 Parameters:
   PHPFPMImage:
     Type: String
-    Default: 'php:7.4-fpm'
     Description: Image for php-fpm. (Overridden in codepipeline)
   NginxImage:
     Type: String
-    Default: 'nginx:latest'
     Description: Image for nginx. (Overridden in codepipeline)
   Environment:
     Type: String
-    Default: 'stage'
-    Description: Environment name.
+    Description: Environment name. (Overridden in codepipeline)
   SecretsArn:
     Type: String
-    Description: Secrets container ARN.
+    Description: Secrets container ARN. (Overridden in codepipeline)
 
 Resources:
 
@@ -33,7 +30,7 @@ Resources:
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
       SecurityGroupIngress:
         - SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
-          IpProtocol: -1
+          IpProtocol: "-1"
 
   EC2SecurityGroupPublicLoadBalancer:
     Type: AWS::EC2::SecurityGroup
@@ -43,7 +40,7 @@ Resources:
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
-          IpProtocol: -1
+          IpProtocol: "-1"
 
   EC2SecurityGroupIngressPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
@@ -51,7 +48,7 @@ Resources:
       Description: Ingress from the public ALB
       GroupId: 
         Fn::ImportValue: infrastructure-poc-wordpress-ecs-EC2SecurityGroupECSHost
-      IpProtocol: -1
+      IpProtocol: "-1"
       SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
 
 ##
@@ -134,8 +131,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: ElasticLoadBalancingV2Listener
     Properties:
-      Cluster:
-        Fn::ImportValue: infrastructure-poc-wordpress-ecs-ClusterName
+      LaunchType: FARGATE
       ServiceName: !Sub "${AWS::StackName}"
       HealthCheckGracePeriodSeconds: 60
       # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
@@ -149,12 +145,12 @@ Resources:
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      ExecutionRoleArn: !Ref IAMRoleTaskExecution
+      ExecutionRoleArn: !GetAtt IAMRoleTaskExecution.Arn
       TaskRoleArn: !Ref IAMRoleTaskDefinition
       Family: !Sub "${AWS::StackName}"
-      Cpu: 256
-      Memory: 512
-      NetworkMode: bridge
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
       ContainerDefinitions:
         - Name: php-fpm
           Image: !Ref PHPFPMImage
@@ -166,6 +162,13 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogsLogGroup
               awslogs-stream-prefix: php-fpm
+          Environment:
+            - Name: WP_DB_HOST
+              Value: !GetAtt RDSDBCluster.Endpoint.Address
+            - Name: S3_UPLOADS_BUCKET
+              Value: !Ref S3Bucket
+            - Name: ENV
+              Value: !Ref Environment
           Secrets:
             - Name: WP_DB_NAME
               ValueFrom: !Ref SecretsArn
@@ -243,7 +246,7 @@ Resources:
       Scheme: internet-facing
       LoadBalancerAttributes:
       - Key: idle_timeout.timeout_seconds
-        Value: 30
+        Value: "30"
       Subnets:
         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
@@ -252,8 +255,6 @@ Resources:
 
   ElasticLoadBalancingV2Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
-    DependsOn:
-      - ElasticLoadBalancingV2LoadBalancer
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
@@ -275,3 +276,52 @@ Resources:
       UnhealthyThresholdCount: 2
       VpcId: 
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+
+  RDSDBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora
+      EngineMode: serverless
+      DatabaseName: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_NAME}}"
+      MasterUsername: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_USER}}"
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_PASSWORD}}"
+      ScalingConfiguration:
+        AutoPause: false
+        MinCapacity: 4
+        MaxCapacity: 32
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: files.helsingborg.se
+
+  IAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      Policies:
+        - PolicyName: S3BucketPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Sid: BucketObjects
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:DeleteObject
+                  - s3:GetBucketAcl
+                  - s3:GetBucketLocation
+                  - s3:GetBucketPolicy
+                  - s3:GetObject
+                  - s3:GetObjectAcl
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:ListMultipartUploadParts
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+              - Effect: Allow
+                Sid: BucketList
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}"

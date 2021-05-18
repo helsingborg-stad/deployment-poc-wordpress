@@ -103,8 +103,7 @@
         "helsingborg-stad/algolia-index-modularity-addon": "^1.0",
         "helsingborg-stad/skyfish-integration": "^0.9.1",
         "wpackagist-plugin/cookies-and-content-security-policy": "^1.44",
-        "humanmade/s3-uploads": "^2.2",
-        "humanmade/aws-ses-wp-mail": "^1.1"
+        "humanmade/s3-uploads": "^2.2"
     },
 
     "extra": {

@@ -3,6 +3,7 @@
 /**
 * Tell WordPress to load from local wp-content, and not vendor wp.
 */
+
 define('WP_CONTENT_DIR', dirname(dirname(__FILE__)) . '/wp-content');
 
 if (isset($_SERVER['HTTP_HOST'])) {
@@ -13,7 +14,7 @@ if (isset($_SERVER['HTTP_HOST'])) {
  * Use municipio as default theme.
  * @var string
  */
- define('WP_DEFAULT_THEME', 'municipio');
+define('WP_DEFAULT_THEME', 'municipio');
 
 /**
  * Limit number of post revisions per post

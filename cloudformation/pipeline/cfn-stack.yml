@@ -37,7 +37,7 @@ Resources:
       Artifacts:
         Type: CODEPIPELINE
       Environment:
-        Type: linuxContainer
+        Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
         PrivilegedMode: true
@@ -54,7 +54,7 @@ Resources:
       Artifacts:
         Type: CODEPIPELINE
       Environment:
-        Type: linuxContainer
+        Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
         PrivilegedMode: true
@@ -71,7 +71,7 @@ Resources:
       Artifacts:
         Type: CODEPIPELINE
       Environment:
-        Type: linuxContainer
+        Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
         PrivilegedMode: true
@@ -97,13 +97,13 @@ Resources:
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
-                Version: 1
+                Version: "1"
                 Provider: GitHub
               Configuration:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
-                OAuthToken: !Sub "{{resolve:secretsmanager:CodepipelineGithubAccessToken:SecretString:token}}"
+                OAuthToken: "{{resolve:secretsmanager:CodepipelineGithubAccessToken:SecretString:token}}"
                 PollForSourceChanges: false
               OutputArtifacts:
                 - 
@@ -117,7 +117,7 @@ Resources:
               ActionTypeId:
                 Category: Build
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-docker-php-fpm"
@@ -149,7 +149,7 @@ Resources:
               ActionTypeId:
                 Category: Build
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-docker-nginx"
@@ -178,7 +178,7 @@ Resources:
                 Category: Deploy
                 Owner: AWS
                 Provider: CloudFormation
-                Version: 1
+                Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
                 Capabilities: CAPABILITY_IAM
@@ -187,11 +187,15 @@ Resources:
                 StackName: deployment-poc-wordpress-stage
                 TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-stage.json
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
-                ParameterOverrides: |
-                  {
-                    "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                    "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]}
-                  }
+                ParameterOverrides: !Sub 
+                  - |
+                    {
+                      "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
+                      "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
+                      "Environment": "stage",
+                      "SecretsArn": ${SecretsArn}
+                    }
+                  - SecretsArn: !ImportValue wordpress-secrets-SecretsStage
               InputArtifacts:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput
@@ -204,7 +208,7 @@ Resources:
               ActionTypeId:
                 Category: Build
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Sub "${AWS::StackName}-integration-test"
@@ -221,7 +225,7 @@ Resources:
               ActionTypeId:
                 Category: Approval
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: Manual
                 # TODO notification
             - Name: CreateProduction
@@ -229,7 +233,7 @@ Resources:
                 Category: Deploy
                 Owner: AWS
                 Provider: CloudFormation
-                Version: 1
+                Version: "1"
               Configuration:
                 ActionMode: CREATE_UPDATE
                 Capabilities: CAPABILITY_IAM
@@ -237,11 +241,15 @@ Resources:
                 StackName: deployment-poc-wordpress-prod
                 TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-prod.json
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
-                ParameterOverrides: |
-                  {
-                    "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                    "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]}
-                  }
+                ParameterOverrides: !Sub 
+                  - |
+                    {
+                      "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
+                      "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
+                      "Environment": "prod",
+                      "SecretsArn": "${SecretsArn}"
+                    }
+                  - SecretsArn: !ImportValue wordpress-secrets-SecretsProd
               InputArtifacts:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput

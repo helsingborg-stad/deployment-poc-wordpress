@@ -133,10 +133,22 @@ Create/update and delete.
 `aws cloudformation delete-stack --stack-name deployment-poc-wordpress-codepipeline`  
 
 #### Wordpress secrets
-TODO Script for adding secrets with AWS CLI?
+Copy the file cloudformation/secrets/secrets-example.json to cloudformation/secrets/secrets.json and fill all the desired values.
 
+Create stack.
+```
+aws cloudformation create-stack --stack-name wordpress-secrets --parameters file://$PWD/cloudformation/secrets/secrets.json --template-body file://$PWD/cloudformation/secrets/cfn-stack.yml
+```
 
+Update stack.
+```
+aws cloudformation update-stack --stack-name wordpress-secrets --parameters file://$PWD/cloudformation/secrets/secrets.json --template-body file://$PWD/cloudformation/secrets/cfn-stack.yml
+```
 
+Delete stack.
+```
+aws cloudformation delete-stack --stack-name wordpress-secrets
+```
 
 ## Usage
 

@@ -53,3 +53,5 @@ env.yml
 .vscode
 
 docker/docker-compose.yml
+
+cloudformation/secrets/secrets.json
