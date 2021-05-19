@@ -16,7 +16,13 @@ Parameters:
     Description: Secrets container ARN. (Overridden in codepipeline)
 
 Resources:
-
+##
+# ECS
+##
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${AWS::StackName}-cluster"
 ##
 # EC2
 ##   
@@ -64,20 +70,8 @@ Resources:
             Principal:
               Service: [ecs-tasks.amazonaws.com]
             Action: ["sts:AssumeRole"]
-      Policies:
-        - PolicyName: !Sub "${AWS::StackName}-ecs-task-execution-role-policy"
-          PolicyDocument:
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "ecr:GetAuthorizationToken"
-                  - "ecr:BatchCheckLayerAvailability"
-                  - "ecr:GetDownloadUrlForLayer"
-                  - "ecr:BatchGetImage"
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
-                  - "secretsmanager:GetSecretValue"
-                Resource: "*"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
 
   IAMRoleTaskDefinition:
     Type: AWS::IAM::Role
@@ -98,20 +92,8 @@ Resources:
             Principal:
               Service: [application-autoscaling.amazonaws.com]
             Action: ["sts:AssumeRole"]
-      Policies:
-        - PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ecs:DescribeServices
-                  - ecs:UpdateService
-                  - cloudwatch:PutMetricAlarm
-                  - cloudwatch:DescribeAlarms
-                  - cloudwatch:DeleteAlarms
-                Resource:
-                  - "*"
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
 
 ##
 # Logs
@@ -216,10 +198,7 @@ Resources:
     DependsOn: ECSService
     Properties:
       RoleARN: !GetAtt IAMRoleAutoScaling.Arn
-      ResourceId: !Sub
-        - "service/${ClusterName}/${ECSService.Name}"
-        - ClusterName: 
-            Fn::ImportValue: infrastructure-poc-wordpress-ecs-ClusterName
+      ResourceId: !Sub "service/${ECSCluster}/${ECSService.Name}"
       ServiceNamespace: ecs
       ScalableDimension: ecs:service:DesiredCount
       MinCapacity: 1

@@ -193,7 +193,7 @@ Resources:
                       "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
                       "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
                       "Environment": "stage",
-                      "SecretsArn": ${SecretsArn}
+                      "SecretsArn": "${SecretsArn}"
                     }
                   - SecretsArn: !ImportValue wordpress-secrets-SecretsStage
               InputArtifacts:
