@@ -127,6 +127,16 @@ Resources:
                       "name": "NPM_TOKEN",
                       "type": "SECRETS_MANAGER",
                       "value": "NpmTokenSecret:NPM_TOKEN"
+                    },
+                    {
+                      "name": "DOCKER_USER",
+                      "type": "SECRETS_MANAGER",
+                      "value": "DockerCredentials:USER"
+                    },
+                    {
+                      "name": "DOCKER_PASSWORD",
+                      "type": "SECRETS_MANAGER",
+                      "value": "DockerCredentials:PASSWORD"
                     }
                   ]
               InputArtifacts: 
@@ -154,6 +164,16 @@ Resources:
                     {
                       "name": "ECR_REPOSITORY_URI",
                       "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-nginx"
+                    },
+                    {
+                      "name": "DOCKER_USER",
+                      "type": "SECRETS_MANAGER",
+                      "value": "DockerCredentials:USER"
+                    },
+                    {
+                      "name": "DOCKER_PASSWORD",
+                      "type": "SECRETS_MANAGER",
+                      "value": "DockerCredentials:PASSWORD"
                     }
                   ]
               InputArtifacts: 

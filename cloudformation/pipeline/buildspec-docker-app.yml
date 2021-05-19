@@ -15,6 +15,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
+      - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
       - docker pull $ECR_REPOSITORY_URI:base || true
       - docker build -t $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:base --target base $BUILD_CONTEXT
       - docker build --build-arg NPM_TOKEN=$NPM_TOKEN -t $ECR_REPOSITORY_URI:latest --cache-from $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:latest --target app $BUILD_CONTEXT 
