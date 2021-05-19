@@ -224,6 +224,10 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: 60 # default is 300
+      TargetType: ip
       VpcId: 
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
 
