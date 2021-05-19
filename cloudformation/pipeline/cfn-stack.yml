@@ -429,6 +429,9 @@ Resources:
                  - ecs:*
                  - application-autoscaling:*
                  - elasticloadbalancing:*
+                 - secretsmanager:*
+                 - rds:*
+                 - s3:*
                Resource: "*"
 
 ##

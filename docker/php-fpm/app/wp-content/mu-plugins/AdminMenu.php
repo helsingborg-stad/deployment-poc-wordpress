@@ -1,11 +1,15 @@
 <?php
 
-namespace Helsingborg\Theme;
+namespace Helsingborg\AdminMenu;
 
 class AdminMenu
 {
     public function __construct()
     {
+        if(!defined('NESTEDPAGES_DIR')) {
+          return; 
+        }
+
         add_action('admin_head', array($this, 'menuHighlight'));
         add_action('admin_menu', array($this, 'manageAdminMenu'), 50);
         add_action('admin_menu', array($this, 'removeDefaultActions'), 500);
@@ -55,3 +59,5 @@ class AdminMenu
         }
     }
 }
+
+new \Helsingborg\AdminMenu\AdminMenu();

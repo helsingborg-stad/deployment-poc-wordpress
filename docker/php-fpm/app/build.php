@@ -27,6 +27,7 @@ $removables = [
     '.gitignore',
     'config',
     'wp-content/uploads',
+    'wp-content/themes/municipio/node_modules',
     '.github',
     'build.php',
     'composer.json',
