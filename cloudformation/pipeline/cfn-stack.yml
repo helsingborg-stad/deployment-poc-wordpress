@@ -444,6 +444,7 @@ Resources:
                  - secretsmanager:*
                  - rds:*
                  - s3:*
+                 - elasticache:*
                Resource: "*"
 
 ##

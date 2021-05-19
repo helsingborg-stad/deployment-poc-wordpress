@@ -159,8 +159,6 @@ Resources:
               ValueFrom: !Ref SecretsArn
         - Name: nginx
           Image: !Ref NginxImage
-          Links: 
-            - php-fpm
           VolumesFrom:
             - SourceContainer: php-fpm
           PortMappings:
