@@ -48,14 +48,6 @@ Resources:
         - CidrIp: 0.0.0.0/0
           IpProtocol: "-1"
 
-  EC2SecurityGroupIngressPublicALB:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      Description: Ingress from the public ALB
-      GroupId: 
-        Fn::ImportValue: infrastructure-poc-wordpress-ecs-EC2SecurityGroupECSHost
-      IpProtocol: "-1"
-      SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
 
 ##
 # IAM
