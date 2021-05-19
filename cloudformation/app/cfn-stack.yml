@@ -90,6 +90,7 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: ElasticLoadBalancingV2Listener
     Properties:
+      Cluster: !GetAtt ECSCluster.Arn
       LaunchType: FARGATE
       ServiceName: !Sub "${AWS::StackName}"
       HealthCheckGracePeriodSeconds: 60
