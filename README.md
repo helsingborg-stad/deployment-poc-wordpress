@@ -128,26 +128,26 @@ Validate your template before creating the stack and fix any errors.
 `aws cloudformation validate-template --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml`  
   
 Create/update and delete.  
-`aws cloudformation create-stack --stack-name deployment-poc-wordpress-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM`  
-`aws cloudformation update-stack --stack-name deployment-poc-wordpress-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM`  
-`aws cloudformation delete-stack --stack-name deployment-poc-wordpress-codepipeline`  
+`aws cloudformation create-stack --stack-name deployment-poc-wordpress-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM --region eu-central-1`  
+`aws cloudformation update-stack --stack-name deployment-poc-wordpress-codepipeline --template-body file://$PWD/cloudformation/pipeline/cfn-stack.yml --capabilities CAPABILITY_IAM --region eu-central-1`  
+`aws cloudformation delete-stack --stack-name deployment-poc-wordpress-codepipeline --region eu-central-1`  
 
 #### Wordpress secrets
 Copy the file cloudformation/secrets/secrets-example.json to cloudformation/secrets/secrets.json and fill all the desired values.
 
 Create stack.
 ```
-aws cloudformation create-stack --stack-name wordpress-secrets --parameters file://$PWD/cloudformation/secrets/secrets.json --template-body file://$PWD/cloudformation/secrets/cfn-stack.yml
+aws cloudformation create-stack --stack-name wordpress-secrets --parameters file://$PWD/cloudformation/secrets/secrets.json --template-body file://$PWD/cloudformation/secrets/cfn-stack.yml --region eu-central-1
 ```
 
 Update stack.
 ```
-aws cloudformation update-stack --stack-name wordpress-secrets --parameters file://$PWD/cloudformation/secrets/secrets.json --template-body file://$PWD/cloudformation/secrets/cfn-stack.yml
+aws cloudformation update-stack --stack-name wordpress-secrets --parameters file://$PWD/cloudformation/secrets/secrets.json --template-body file://$PWD/cloudformation/secrets/cfn-stack.yml --region eu-central-1
 ```
 
 Delete stack.
 ```
-aws cloudformation delete-stack --stack-name wordpress-secrets
+aws cloudformation delete-stack --stack-name wordpress-secrets --region eu-central-1
 ```
 
 ## Usage

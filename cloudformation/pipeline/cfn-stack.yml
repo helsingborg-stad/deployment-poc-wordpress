@@ -14,14 +14,6 @@ Parameters:
     Type: String
     Default: 'master'
     Description: Branch to react on commits.
-  SecretNpmToken:
-    Type: String
-    Default: 'helsingborg.se.Secret_NPM_TOKEN'
-    Description: Variable name for secret NPM_TOKEN.
-  SecretGithubAccessToken:
-    Type: String
-    Default: 'helsingborg.se.Secret_GITHUB_ACCESS_TOKEN'
-    Description: Variable name for secret GITHUB_ACCESS_TOKEN.
 
 Resources:
 

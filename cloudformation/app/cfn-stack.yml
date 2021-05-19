@@ -17,16 +17,35 @@ Parameters:
 
 Resources:
 ##
-# ECS
+# ApplicationAutoScaling
 ##
-  ECSCluster:
-    Type: AWS::ECS::Cluster
+  ApplicationAutoScalingScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    DependsOn: ECSService
     Properties:
-      ClusterName: !Sub "${AWS::StackName}-cluster"
+      RoleARN: !GetAtt IAMRoleAutoScaling.Arn
+      ResourceId: !Sub "service/${ECSCluster}/${ECSService.Name}"
+      ServiceNamespace: ecs
+      ScalableDimension: ecs:service:DesiredCount
+      MinCapacity: 1
+      MaxCapacity: 5
+
+  ApplicationAutoScalingScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ApplicationAutoScalingScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 75.0
+
+
+
 ##
 # EC2
 ##   
-
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -48,58 +67,24 @@ Resources:
         - CidrIp: 0.0.0.0/0
           IpProtocol: "-1"
 
-
-##
-# IAM
-##      
-
-  IAMRoleTaskExecution:
-    Type: AWS::IAM::Role
+  EC2SecurityGroupElasticache:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ecs-tasks.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      GroupDescription: Elasticache Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
 
-  IAMRoleTaskDefinition:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ecs-tasks.amazonaws.com]
-            Action: ["sts:AssumeRole"]
 
-  IAMRoleAutoScaling:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [application-autoscaling.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
-
-##
-# Logs
-##
-
-  LogsLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "${AWS::StackName}"
-      RetentionInDays: 14
 
 ##
 # ECS
 ##
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${AWS::StackName}-cluster"
 
   ECSService:
     Type: AWS::ECS::Service
@@ -139,8 +124,14 @@ Resources:
           Environment:
             - Name: WP_DB_HOST
               Value: !GetAtt RDSDBCluster.Endpoint.Address
+            - Name: WP_REDIS_HOST
+              Value: !GetAtt ElasticacheCluster.RedisEndpoint.Address
             - Name: S3_UPLOADS_BUCKET
               Value: !Ref S3Bucket
+            - Name: S3_UPLOADS_KEY
+              Value: !Ref IAMAccessKeyS3
+            - Name: S3_UPLOADS_SECRET
+              Value: !GetAtt IAMAccessKeyS3.SecretAccessKey
             - Name: ENV
               Value: !Ref Environment
           Secrets:
@@ -181,36 +172,25 @@ Resources:
               awslogs-group: !Ref LogsLogGroup
               awslogs-stream-prefix: nginx
 
-##
-# ApplicationAutoScaling
-##
 
-  ScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    DependsOn: ECSService
-    Properties:
-      RoleARN: !GetAtt IAMRoleAutoScaling.Arn
-      ResourceId: !Sub "service/${ECSCluster}/${ECSService.Name}"
-      ServiceNamespace: ecs
-      ScalableDimension: ecs:service:DesiredCount
-      MinCapacity: 1
-      MaxCapacity: 5
+##
+# Elasticache
+##
+  ElasticacheCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:    
+      Engine: redis
+      EngineVersion: 6.x
+      CacheNodeType: cache.t2.micro
+      NumCacheNodes: 1
+      VpcSecurityGroupIds:
+        - !GetAtt EC2SecurityGroupElasticache.GroupId
 
-  ScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageCPUUtilization
-        TargetValue: 75.0
+        
 
 ##
 # ElasticLoadBalancingV2
 ##
-
   ElasticLoadBalancingV2LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -248,26 +228,46 @@ Resources:
       VpcId: 
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
 
-  RDSDBCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      Engine: aurora
-      EngineMode: serverless
-      DatabaseName: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_NAME}}"
-      MasterUsername: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_USER}}"
-      MasterUserPassword: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_PASSWORD}}"
-      ScalingConfiguration:
-        AutoPause: false
-        MinCapacity: 4
-        MaxCapacity: 32
 
-  S3Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      AccessControl: PublicRead
-      BucketName: files.helsingborg.se
 
-  IAMUser:
+##
+# IAM
+##      
+  IAMRoleTaskExecution:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+
+  IAMRoleTaskDefinition:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+
+  IAMRoleAutoScaling:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [application-autoscaling.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+
+  IAMUserS3:
     Type: AWS::IAM::User
     Properties:
       Policies:
@@ -296,3 +296,49 @@ Resources:
                 Action:
                   - s3:ListBucket
                 Resource: !Sub "arn:aws:s3:::${S3Bucket}"
+
+  IAMAccessKeyS3:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      UserName: !Ref IAMUserS3
+
+
+
+##
+# Logs
+##
+  LogsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "${AWS::StackName}"
+      RetentionInDays: 14
+
+
+
+##
+# RDS
+##
+
+  RDSDBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora
+      EngineMode: serverless
+      DatabaseName: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_NAME}}"
+      MasterUsername: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_USER}}"
+      MasterUserPassword: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_PASSWORD}}"
+      ScalingConfiguration:
+        AutoPause: false
+        MinCapacity: 4
+        MaxCapacity: 32
+
+
+
+##
+# S3
+##
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: PublicRead
+      BucketName: files-testing.helsingborg.se
