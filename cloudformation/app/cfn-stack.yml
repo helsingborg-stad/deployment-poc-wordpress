@@ -114,7 +114,7 @@ Resources:
       NetworkConfiguration: 
         AwsvpcConfiguration:
           # change to DISABLED if you're using private subnets that have access to a NAT gateway
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
           Subnets:
             - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
             - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
