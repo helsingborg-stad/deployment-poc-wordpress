@@ -341,13 +341,14 @@ Resources:
                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
               - Effect: Allow
                 Action:
-                  - ecr:BatchCheckLayerAvailability
-                  - ecr:CompleteLayerUpload
-                  - ecr:GetAuthorizationToken
-                  - ecr:InitiateLayerUpload
-                  - ecr:PutImage
-                  - ecr:UploadLayerPart
-                  - ecr:BatchGetImage
+                  # - ecr:BatchCheckLayerAvailability
+                  # - ecr:CompleteLayerUpload
+                  # - ecr:GetAuthorizationToken
+                  # - ecr:InitiateLayerUpload
+                  # - ecr:PutImage
+                  # - ecr:UploadLayerPart
+                  # - ecr:BatchGetImage
+                  - ecr:*
                 Resource: "*" # TODO More granular resources here
 
   IAMRoleCodePipeline:
