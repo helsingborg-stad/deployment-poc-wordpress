@@ -367,8 +367,15 @@ Resources:
       VpcSecurityGroupIds:
         - !Ref EC2SecurityGroupRDS
       DBSubnetGroupName:
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+        !Ref RDSDBSubnetGroup
 
+  RDSDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds: 
+        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
 ##
 # S3
 ##
