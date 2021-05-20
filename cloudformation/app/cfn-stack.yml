@@ -366,7 +366,8 @@ Resources:
         MaxCapacity: 32
       VpcSecurityGroupIds:
         - !Ref EC2SecurityGroupRDS
-
+      DBSubnetGroupName:
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
 
 ##
 # S3
