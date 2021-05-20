@@ -88,6 +88,16 @@ Resources:
           ToPort: 80
           SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
 
+  EC2SecurityGroupRDS:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: RDS Security Group
+      VpcId: 
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 3306
+        ToPort: 3306
 ##
 # ECS
 ##
@@ -354,7 +364,8 @@ Resources:
         AutoPause: false
         MinCapacity: 4
         MaxCapacity: 32
-
+      VpcSecurityGroupIds:
+        - !Ref EC2SecurityGroupRDS
 
 
 ##
