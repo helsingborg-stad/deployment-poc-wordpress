@@ -76,7 +76,17 @@ Resources:
           FromPort: 6379
           ToPort: 6379
 
-
+  EC2SecurityGroupContainer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Container Security Group
+      VpcId: 
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
 
 ##
 # ECS
@@ -101,6 +111,15 @@ Resources:
         - ContainerName: nginx
           ContainerPort: 80
           TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
+      NetworkConfiguration: 
+        AwsvpcConfiguration:
+          # change to DISABLED if you're using private subnets that have access to a NAT gateway
+          AssignPublicIp: DISABLED
+          Subnets:
+            - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+            - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
+          SecurityGroups:
+            - !Ref EC2SecurityGroupContainer
 
   ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -226,7 +245,7 @@ Resources:
       UnhealthyThresholdCount: 2
       TargetGroupAttributes:
         - Key: deregistration_delay.timeout_seconds
-          Value: 60 # default is 300
+          Value: "60"
       TargetType: ip
       VpcId: 
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
