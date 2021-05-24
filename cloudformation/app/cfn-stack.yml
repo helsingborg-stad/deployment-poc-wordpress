@@ -89,7 +89,7 @@ Resources:
           SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
 
   EC2SecurityGroupRDS:
-    Type: 'AWS::EC2::SecurityGroup'
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: RDS Security Group
       VpcId: 
@@ -98,6 +98,10 @@ Resources:
       - IpProtocol: tcp
         FromPort: 3306
         ToPort: 3306
+      SecurityGroupEgress: 
+      - CidrIp: "0.0.0.0/0"
+        IpProtocol: "-1"
+
 ##
 # ECS
 ##
