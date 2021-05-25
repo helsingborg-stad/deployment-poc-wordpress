@@ -30,7 +30,8 @@ $removables = [
     '.github',
     'build.php',
     'composer.json',
-    'composer.lock'
+    'composer.lock',
+    'wp-config.php'
 ];
 
 $dirName = basename(dirname(__FILE__));
