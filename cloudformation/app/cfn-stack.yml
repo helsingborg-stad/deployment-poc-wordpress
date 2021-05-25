@@ -157,6 +157,8 @@ Resources:
               awslogs-group: !Ref LogsLogGroup
               awslogs-stream-prefix: php-fpm
           Environment:
+            - Name: WP_DOMAIN_CURRENT_SITE
+              Value: dockertest.helsingborg.io
             - Name: WP_DB_HOST
               Value: !GetAtt RDSDBCluster.Endpoint.Address
             - Name: WP_REDIS_HOST
@@ -389,4 +391,4 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
-      BucketName: files-testing.helsingborg.se
+      BucketName: files-dockertest.helsingborg.io
