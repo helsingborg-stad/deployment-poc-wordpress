@@ -95,12 +95,13 @@ Resources:
       VpcId: 
         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
       SecurityGroupIngress:
-      - IpProtocol: tcp
-        FromPort: 3306
-        ToPort: 3306
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: "10.2.0.0/16"
       SecurityGroupEgress: 
-      - CidrIp: "0.0.0.0/0"
-        IpProtocol: "-1"
+        - CidrIp: "10.2.0.0/16"
+          IpProtocol: "-1"
 
 ##
 # ECS
@@ -372,6 +373,7 @@ Resources:
         - !Ref EC2SecurityGroupRDS
       DBSubnetGroupName:
         !Ref RDSDBSubnetGroup
+      EnableHttpEndpoint: true
 
   RDSDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
