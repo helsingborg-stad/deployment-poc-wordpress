@@ -25,3 +25,5 @@ define('WP_CACHE_KEY_SALT', md5(NONCE_KEY));
  */
 define('WP_REDIS_DISABLED', false);
 define('WP_REDIS_HOST', getenv('WP_REDIS_HOST'));
+
+define('BLADE_CUSTOM_CACHE_DIR', '/tmp');

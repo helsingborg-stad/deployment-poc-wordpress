@@ -1,54 +1,28 @@
-FROM php:7.4-fpm AS base
+FROM base AS builder
 
-# Download script to install PHP extensions and dependencies
-ADD https://raw.githubusercontent.com/mlocati/docker-php-extension-installer/master/install-php-extensions /usr/local/bin/
+ARG NPM_TOKEN
+ARG ACF
 
-RUN chmod uga+x /usr/local/bin/install-php-extensions && sync; \
-      DEBIAN_FRONTEND=noninteractive apt-get update -q \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
-      curl \
-      git \
-      zip unzip \
-    && install-php-extensions \
-      bcmath \
-      bz2 \
-      calendar \
-      exif \
-      gd \
-      intl \
-      ldap \
-      memcached \
-      mysqli \
-      opcache \
-      pdo_mysql \
-      pdo_pgsql \
-      pgsql \
-      redis \
-      soap \
-      xsl \
-      zip \
-      sockets \
-      pdo_sqlsrv \
-      sqlsrv; \
-      rm -rf /var/lib/apt/lists/*; \
-      # Install NodeJS
-      curl -sL https://deb.nodesource.com/setup_12.x | bash -; \
-      apt-get install -y nodejs; \
+COPY app/ /app
+
+RUN   set -x; \
+      curl -fsSL https://deb.nodesource.com/setup_14.x | bash -; \
+      apt-get update; \
+      apt-get install -y nodejs tar gcc g++ make unzip git wget; \
       # Install Composer.
-      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-      && ln -s $(composer config --global home) /root/composer; \
-      composer self-update --snapshot;
+      composer self-update --2; \
+      composer install --prefer-dist --no-progress; \
+      echo "registry=https://npm.pkg.github.com/helsingborg-stad" >> ~/.npmrc; \
+      echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc; \
+      php build.php --cleanup; \
+      rm ~/.npmrc; \
+      wget -O acp.zip "${ACF}" ; \
+      unzip acp.zip -d wp-content/plugins/ ; \
+      rm acp.zip; \
+      chown -R www-data:www-data /app;
 
 FROM base as app
 
-ARG NPM_TOKEN
-
-COPY app/ /var/www/html
-
-RUN composer install --prefer-dist --no-progress --no-suggest; \
-    echo "registry=https://npm.pkg.github.com/helsingborg-stad" >> ~/.npmrc; \
-    echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc; \
-    php build.php --cleanup; \
-    rm ~/.npmrc;
+COPY  --from=builder /app /app
 
 VOLUME /var/www/html
