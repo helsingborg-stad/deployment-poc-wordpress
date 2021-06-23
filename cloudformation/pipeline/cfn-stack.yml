@@ -21,23 +21,6 @@ Resources:
 # CodeBuild
 ##
 
-  CodeBuildProjectDockerNginx:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: !Sub "${AWS::StackName}-docker-nginx"
-      ServiceRole: !GetAtt IAMRoleCodebuild.Arn
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:4.0
-        PrivilegedMode: true
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: cloudformation/pipeline/buildspec-docker.yml
-      TimeoutInMinutes: 10
-
   CodeBuildProjectDockerPhpFpm:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -129,6 +112,15 @@ Resources:
                       "value": "NpmTokenSecret:NPM_TOKEN"
                     },
                     {
+                      "name": "ACF",
+                      "type": "SECRETS_MANAGER",
+                      "value": "ACF:ACF"
+                    },
+                    {
+                      "name": "CLEANUP",
+                      "value": "--cleanup"
+                    },
+                    {
                       "name": "DOCKER_USER",
                       "type": "SECRETS_MANAGER",
                       "value": "DockerCredentials:USER"
@@ -145,43 +137,6 @@ Resources:
               OutputArtifacts:
                 - 
                   Name: BuildPHPOutput
-              RunOrder: 1
-            -
-              Name: BuildAndPushNginxDockerImage
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: "1"
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Sub "${AWS::StackName}-docker-nginx"
-                EnvironmentVariables: !Sub |
-                  [
-                    {
-                      "name": "BUILD_CONTEXT",
-                      "value": "./docker/nginx/"
-                    },
-                    {
-                      "name": "ECR_REPOSITORY_URI",
-                      "value": "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${AWS::StackName}-nginx"
-                    },
-                    {
-                      "name": "DOCKER_USER",
-                      "type": "SECRETS_MANAGER",
-                      "value": "DockerCredentials:USER"
-                    },
-                    {
-                      "name": "DOCKER_PASSWORD",
-                      "type": "SECRETS_MANAGER",
-                      "value": "DockerCredentials:PASSWORD"
-                    }
-                  ]
-              InputArtifacts: 
-                - 
-                  Name: SourceOutput
-              OutputArtifacts:
-                - 
-                  Name: BuildNginxOutput
               RunOrder: 1
         - Name: Stage
           Actions:
@@ -203,7 +158,6 @@ Resources:
                   - |
                     {
                       "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                      "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
                       "Environment": "stage",
                       "SecretsArn": "${SecretsArn}"
                     }
@@ -211,7 +165,6 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput
-                - Name: BuildNginxOutput
               OutputArtifacts:
                 - Name: StackStageOutput
               RunOrder: 1
@@ -257,7 +210,6 @@ Resources:
                   - |
                     {
                       "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                      "NginxImage" : { "Fn::GetParam" : ["BuildNginxOutput", "imagedefinitions.json", "imageUri"]},
                       "Environment": "prod",
                       "SecretsArn": "${SecretsArn}"
                     }
@@ -265,7 +217,6 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput
-                - Name: BuildNginxOutput
               RunOrder: 2
       ArtifactStore:
         Type: S3

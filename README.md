@@ -71,7 +71,8 @@ To get a local copy up and running follow these simple steps.
 * AWS CLI
 * yarn
 * Docker
-
+* Docker compose
+* Mutagen v0.12.0-beta3
 
 
 ### Installation

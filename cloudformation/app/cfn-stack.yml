@@ -5,9 +5,6 @@ Parameters:
   PHPFPMImage:
     Type: String
     Description: Image for php-fpm. (Overridden in codepipeline)
-  NginxImage:
-    Type: String
-    Description: Image for nginx. (Overridden in codepipeline)
   Environment:
     Type: String
     Description: Environment name. (Overridden in codepipeline)
@@ -123,7 +120,7 @@ Resources:
       TaskDefinition: !Ref ECSTaskDefinition
       DesiredCount: 1
       LoadBalancers:
-        - ContainerName: nginx
+        - ContainerName: php-fpm
           ContainerPort: 80
           TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
       NetworkConfiguration: 
@@ -194,18 +191,6 @@ Resources:
               ValueFrom: !Ref SecretsArn
             - Name: WP_NONCE_SALT
               ValueFrom: !Ref SecretsArn
-        - Name: nginx
-          Image: !Ref NginxImage
-          VolumesFrom:
-            - SourceContainer: php-fpm
-          PortMappings:
-            - ContainerPort: 80
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-region: !Ref AWS::Region
-              awslogs-group: !Ref LogsLogGroup
-              awslogs-stream-prefix: nginx
 
 
 ##

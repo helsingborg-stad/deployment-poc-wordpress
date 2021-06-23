@@ -2,6 +2,7 @@ FROM base AS builder
 
 ARG NPM_TOKEN
 ARG ACF
+ARG CLEANUP=
 
 COPY app/ /app
 
@@ -14,7 +15,7 @@ RUN   set -x; \
       composer install --prefer-dist --no-progress; \
       echo "registry=https://npm.pkg.github.com/helsingborg-stad" >> ~/.npmrc; \
       echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc; \
-      php build.php --cleanup; \
+      php build.php ${CLEANUP}\
       rm ~/.npmrc; \
       wget -O acp.zip "${ACF}" ; \
       unzip acp.zip -d wp-content/plugins/ ; \
@@ -24,5 +25,3 @@ RUN   set -x; \
 FROM base as app
 
 COPY  --from=builder /app /app
-
-VOLUME /var/www/html

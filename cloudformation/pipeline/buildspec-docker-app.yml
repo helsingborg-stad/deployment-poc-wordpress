@@ -18,9 +18,8 @@ phases:
       - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
       - docker pull $ECR_REPOSITORY_URI:base || true
       - docker pull $ECR_REPOSITORY_URI:latest || true
-      - docker build -t $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:base --target base $BUILD_CONTEXT
-      - docker build --build-arg NPM_TOKEN=$NPM_TOKEN -t $ECR_REPOSITORY_URI:latest --cache-from $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:latest --target app $BUILD_CONTEXT 
-      - docker tag $ECR_REPOSITORY_URI:latest $ECR_REPOSITORY_URI:$IMAGE_TAG
+      - docker build -t $ECR_REPOSITORY_URI:base -t base --cache-from $ECR_REPOSITORY_URI:base $BUILD_CONTEXT -f ${BUILD_CONTEXT}Dockerfile.base
+      - docker build --build-arg NPM_TOKEN=$NPM_TOKEN --build-arg ACF=$ACF --build-arg CLEANUP=$CLEANUP -t $ECR_REPOSITORY_URI:latest -t $ECR_REPOSITORY_URI:$IMAGE_TAG --cache-from $ECR_REPOSITORY_URI:base --cache-from $ECR_REPOSITORY_URI:latest --target app $BUILD_CONTEXT
   post_build:
     commands:
       - echo Build completed on `date`
