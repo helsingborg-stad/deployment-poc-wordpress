@@ -247,11 +247,6 @@ Resources:
     Properties:
       RepositoryName: !Sub "${AWS::StackName}-php-fpm"
 
-  ECRRepositoryNginx: 
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: !Sub "${AWS::StackName}-nginx"
-
 ##
 # IAM Role
 ##
@@ -338,12 +333,6 @@ Resources:
                   - codebuild:StartBuild
                   - codebuild:StopBuild
                 Resource: !GetAtt CodeBuildProjectDockerPhpFpm.Arn
-              - Effect: Allow
-                Action:
-                  - codebuild:BatchGetBuilds
-                  - codebuild:StartBuild
-                  - codebuild:StopBuild
-                Resource: !GetAtt CodeBuildProjectDockerNginx.Arn
               - Effect: Allow
                 Action:
                   - codebuild:BatchGetBuilds
