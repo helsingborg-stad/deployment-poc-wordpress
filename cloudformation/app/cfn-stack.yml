@@ -118,6 +118,7 @@ Resources:
       HealthCheckGracePeriodSeconds: 60
       # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
       TaskDefinition: !Ref ECSTaskDefinition
+      EnableExecuteCommand: true
       DesiredCount: 1
       LoadBalancers:
         - ContainerName: php-fpm
