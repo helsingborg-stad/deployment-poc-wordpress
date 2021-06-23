@@ -238,7 +238,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckIntervalSeconds: 61
-      HealthCheckPath: /
+      HealthCheckPath: /health.php
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 60
       HealthyThresholdCount: 2
