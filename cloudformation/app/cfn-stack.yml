@@ -146,7 +146,7 @@ Resources:
         - Name: php-fpm
           Image: !Ref PHPFPMImage
           PortMappings:
-            - ContainerPort: 9000
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
