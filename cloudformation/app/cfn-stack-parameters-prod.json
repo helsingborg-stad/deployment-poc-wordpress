@@ -1,7 +1,6 @@
 {
     "Parameters": {
         "PHPFPMImage": "php:7.4-fpm",
-        "NginxImage": "nginx:latest",
         "Environment": "prod",
         "SecretsArn": "arn:aws:secretsmanager:eu-north-1:308681762884:secret:prod/helsingborg.se-yZqW4k"
     },
