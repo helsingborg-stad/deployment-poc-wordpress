@@ -119,7 +119,6 @@ Resources:
       # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
       TaskDefinition: !Ref ECSTaskDefinition
       EnableExecuteCommand: true
-      ReadonlyRootFilesystem: false
       DesiredCount: 1
       LoadBalancers:
         - ContainerName: php-fpm
@@ -149,6 +148,7 @@ Resources:
           Image: !Ref PHPFPMImage
           PortMappings:
             - ContainerPort: 80
+          ReadonlyRootFilesystem: false
           LogConfiguration:
             LogDriver: awslogs
             Options:
