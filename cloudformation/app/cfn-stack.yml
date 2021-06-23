@@ -119,6 +119,7 @@ Resources:
       # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
       TaskDefinition: !Ref ECSTaskDefinition
       EnableExecuteCommand: true
+      ReadonlyRootFilesystem: false
       DesiredCount: 1
       LoadBalancers:
         - ContainerName: php-fpm
@@ -280,6 +281,18 @@ Resources:
             Principal:
               Service: [ecs-tasks.amazonaws.com]
             Action: ["sts:AssumeRole"]
+      Policies:
+        - PolicyName: 'ExecuteCommandPermissions'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenDataChannel
+                Resource: "*"
 
   IAMRoleAutoScaling:
     Type: AWS::IAM::Role
