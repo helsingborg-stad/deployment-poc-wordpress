@@ -65,7 +65,6 @@
         "helsingborg-stad/better-post-ui": ">=1.0.0",
         "helsingborg-stad/acf-ux-collapse": ">=1.0.0",
         "helsingborg-stad/api-event-manager-integration": "dev-3.0/fix/no-composer-repo",
-        "helsingborg-stad/force-ssl": ">=1.0.0",
         "helsingborg-stad/search-notices": ">=1.0.0",
         "helsingborg-stad/wp-search-statistics": ">=0.1.0",
         "helsingborg-stad/attachment-revisions": ">=1.0.0",
@@ -103,7 +102,8 @@
         "bueltge/must-use-loader": "^1.3",
         "helsingborg-stad/component-library": "dev-master",
         "mcguffin/acf-customizer": "^0.2.13",
-        "wpackagist-plugin/wp-piwik": "^1.0"
+        "wpackagist-plugin/wp-piwik": "^1.0",
+        "humanmade/s3-uploads": "^3.0"
     },
 
     "extra": {

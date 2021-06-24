@@ -30,12 +30,6 @@ define('WEB_FONT', 'Roboto');
  define('AD_RANDOM_PASSWORD', false);
  define('AD_USER_DOMAIN', 'helsingborg.se');
 
-/**
- * Enable ssl proxy mode in ssl plugin
- * @var bool
- */
- define('SSL_PROXY', true);
-
  /**
  * Set a priority to load algolia search at
  * @var bool
