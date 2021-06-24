@@ -1,7 +1,8 @@
 {
     "Parameters": {
         "PHPFPMImage": "php:7.4-fpm",
-        "Environment": "stage"
+        "Environment": "stage",
+        "SecretsArn": "arn:aws:secretsmanager:eu-north-1:308681762884:secret:stage/helsingborg.se-yZqW4k"
     },
     "Tags": {
         "Billing": "wp-poc-wordpress"
