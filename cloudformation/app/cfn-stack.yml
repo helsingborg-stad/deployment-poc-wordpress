@@ -8,9 +8,6 @@ Parameters:
   Environment:
     Type: String
     Description: Environment name. (Overridden in codepipeline)
-  SecretsArn:
-    Type: String
-    Description: Secrets container ARN. (Overridden in codepipeline)
 
 Resources:
 ##
@@ -124,7 +121,7 @@ Resources:
         - ContainerName: php-fpm
           ContainerPort: 80
           TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
-      NetworkConfiguration: 
+      NetworkConfiguration:
         AwsvpcConfiguration:
           # change to DISABLED if you're using private subnets that have access to a NAT gateway
           AssignPublicIp: ENABLED
@@ -172,27 +169,27 @@ Resources:
               Value: !Ref Environment
           Secrets:
             - Name: WP_DB_NAME
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_DB_NAME" 
             - Name: WP_DB_USER
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_DB_USER"
             - Name: WP_DB_PASSWORD
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_DB_PASSWORD"
             - Name: WP_AUTH_KEY
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_AUTH_KEY"
             - Name: WP_SECURE_AUTH_KEY
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_SECURE_AUTH_KEY"
             - Name: WP_LOGGED_IN_KEY
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_LOGGED_IN_KEY"
             - Name: WP_NONCE_KEY
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_NONCE_KEY"
             - Name: WP_AUTH_SALT
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_AUTH_SALT"
             - Name: WP_SECURE_AUTH_SALT
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_SECURE_AUTH_SALT"
             - Name: WP_LOGGED_IN_SALT
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_LOGGED_IN_SALT"
             - Name: WP_NONCE_SALT
-              ValueFrom: !Ref SecretsArn
+              ValueFrom: !Sub "{{resolve:secretsmanager:wordpress/secrets/${Environment}:SecretString:WP_NONCE_SALT"
 
 
 ##
