@@ -188,9 +188,17 @@ Resources:
       EngineVersion: 6.x
       CacheNodeType: cache.t2.micro
       NumCacheNodes: 1
+      CacheSubnetGroupName: !Ref ElastiCacheSubnetGroup
       VpcSecurityGroupIds:
         - !GetAtt EC2SecurityGroupElasticache.GroupId
 
+  ElastiCacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Cache Subnet Group
+      SubnetIds: 
+        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
         
 
 ##
