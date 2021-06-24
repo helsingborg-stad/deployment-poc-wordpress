@@ -86,7 +86,7 @@
         "wpackagist-plugin/redis-cache": "2.0.18",
         "wpackagist-plugin/username-changer": "3.1.3",
         "wpackagist-plugin/wp-editor-widget": "0.6.0",
-        "helsingborg-stad/customer-feedback": "dev-3.0/develop",
+        "helsingborg-stad/customer-feedback": "dev-3.0/fix/no-composer-repo",
         "wpackagist-plugin/wp-mail-smtp": "^1.2",
         "helsingborg-stad/media-usage": "^1.0",
         "wpackagist-plugin/redirection": "^4.3.1",

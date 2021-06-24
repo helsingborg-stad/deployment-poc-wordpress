@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e9c52d6abbfe80416ff971bff30f7091",
+    "content-hash": "0cbd9c18ff79057982c4ff2240bda493",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1531,16 +1531,16 @@
         },
         {
             "name": "helsingborg-stad/customer-feedback",
-            "version": "dev-3.0/develop",
+            "version": "dev-3.0/fix/no-composer-repo",
             "source": {
                 "type": "git",
                 "url": "https://github.com/helsingborg-stad/Customer-feedback.git",
-                "reference": "6bc9ce479559b5f142e01abd58279512bbf8c678"
+                "reference": "af2825b7cd1423af8413904dd01d8a6ab3e975d4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/helsingborg-stad/Customer-feedback/zipball/6bc9ce479559b5f142e01abd58279512bbf8c678",
-                "reference": "6bc9ce479559b5f142e01abd58279512bbf8c678",
+                "url": "https://api.github.com/repos/helsingborg-stad/Customer-feedback/zipball/af2825b7cd1423af8413904dd01d8a6ab3e975d4",
+                "reference": "af2825b7cd1423af8413904dd01d8a6ab3e975d4",
                 "shasum": ""
             },
             "require": {
@@ -1561,9 +1561,9 @@
             "description": "This WordPress plugin adds a feedback form to the end of every page (or any other activated post type).",
             "support": {
                 "issues": "https://github.com/helsingborg-stad/Customer-feedback/issues",
-                "source": "https://github.com/helsingborg-stad/Customer-feedback/tree/3.0/develop"
+                "source": "https://github.com/helsingborg-stad/Customer-feedback/tree/3.0/fix/no-composer-repo"
             },
-            "time": "2021-04-27T09:52:58+00:00"
+            "time": "2021-06-24T13:37:45+00:00"
         },
         {
             "name": "helsingborg-stad/easy-to-read-alternative",
@@ -2057,12 +2057,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/helsingborg-stad/Municipio.git",
-                "reference": "0795eb6b5a76b8b18260430b8f96f63e56c426a8"
+                "reference": "ab1708eff9f9f1f33353391cf34b30807ebdbc62"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/helsingborg-stad/Municipio/zipball/0795eb6b5a76b8b18260430b8f96f63e56c426a8",
-                "reference": "0795eb6b5a76b8b18260430b8f96f63e56c426a8",
+                "url": "https://api.github.com/repos/helsingborg-stad/Municipio/zipball/ab1708eff9f9f1f33353391cf34b30807ebdbc62",
+                "reference": "ab1708eff9f9f1f33353391cf34b30807ebdbc62",
                 "shasum": ""
             },
             "require": {
@@ -2118,7 +2118,7 @@
                 "issues": "https://github.com/helsingborg-stad/Municipio/issues",
                 "source": "https://github.com/helsingborg-stad/Municipio/tree/3.0/develop"
             },
-            "time": "2021-06-24T09:58:45+00:00"
+            "time": "2021-06-24T12:24:08+00:00"
         },
         {
             "name": "helsingborg-stad/recaptcha-integration",
