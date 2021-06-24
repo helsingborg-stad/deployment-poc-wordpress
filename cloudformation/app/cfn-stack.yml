@@ -171,28 +171,8 @@ Resources:
             - Name: ENV
               Value: !Ref Environment
           Secrets:
-            - Name: WP_DB_NAME
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_NAME}}"
-            - Name: WP_DB_USER
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_USER}}"
-            - Name: WP_DB_PASSWORD
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_PASSWORD}}"
-            - Name: WP_AUTH_KEY
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_AUTH_KEY}}"
-            - Name: WP_SECURE_AUTH_KEY
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_SECURE_AUTH_KEY}}"
-            - Name: WP_LOGGED_IN_KEY
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_LOGGED_IN_KEY}}"
-            - Name: WP_NONCE_KEY
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_NONCE_KEY}}"
-            - Name: WP_AUTH_SALT
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_AUTH_SALT}}"
-            - Name: WP_SECURE_AUTH_SALT
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_SECURE_AUTH_SALT}}"
-            - Name: WP_LOGGED_IN_SALT
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_LOGGED_IN_SALT}}"
-            - Name: WP_NONCE_SALT
-              ValueFrom: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_NONCE_SALT}}"
+            - Name: WP_SECRETS
+              ValueFrom: !Ref SecretsArn
 
 ##
 # Elasticache
