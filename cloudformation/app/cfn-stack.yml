@@ -68,6 +68,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Elasticache Security Group
+      VpcId: 
+        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 6379
@@ -168,6 +170,8 @@ Resources:
               Value: !Ref IAMAccessKeyS3
             - Name: S3_UPLOADS_SECRET
               Value: !GetAtt IAMAccessKeyS3.SecretAccessKey
+            - Name: S3_UPLOADS_REGION
+              Value: eu-central-1
             - Name: ENV
               Value: !Ref Environment
           Secrets:
