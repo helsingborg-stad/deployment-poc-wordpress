@@ -397,5 +397,5 @@ Resources:
           - Action:
               - s3:GetObject
             Effect: Allow
-            Resource: !Sub "${S3Bucket}/*"
+            Resource: !Sub "${S3Bucket.Arn}/*"
             Principal: '*'
