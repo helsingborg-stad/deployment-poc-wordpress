@@ -154,14 +154,11 @@ Resources:
                 StackName: deployment-poc-wordpress-stage
                 TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-stage.json
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
-                ParameterOverrides: !Sub 
-                  - |
+                ParameterOverrides: |
                     {
                       "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                      "Environment": "stage",
-                      "SecretsArn": "${SecretsArn}"
+                      "Environment": "stage"
                     }
-                  - SecretsArn: !ImportValue wordpress-secrets-SecretsStage
               InputArtifacts:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput
@@ -206,14 +203,11 @@ Resources:
                 StackName: deployment-poc-wordpress-prod
                 TemplateConfiguration: SourceOutput::cloudformation/app/cfn-stack-parameters-prod.json
                 TemplatePath: SourceOutput::cloudformation/app/cfn-stack.yml
-                ParameterOverrides: !Sub 
-                  - |
+                ParameterOverrides: |
                     {
                       "PHPFPMImage" : { "Fn::GetParam" : ["BuildPHPOutput", "imagedefinitions.json", "imageUri"]},
-                      "Environment": "prod",
-                      "SecretsArn": "${SecretsArn}"
+                      "Environment": "prod"
                     }
-                  - SecretsArn: !ImportValue wordpress-secrets-SecretsProd
               InputArtifacts:
                 - Name: SourceOutput
                 - Name: BuildPHPOutput

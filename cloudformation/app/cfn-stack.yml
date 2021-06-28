@@ -8,9 +8,6 @@ Parameters:
   Environment:
     Type: String
     Description: Environment name. (Overridden in codepipeline)
-  SecretsArn:
-    Type: String
-    Description: Secrets container ARN. (Overridden in codepipeline)
 
 Resources:
 ##
@@ -179,8 +176,30 @@ Resources:
             - Name: ENV
               Value: !Ref Environment
           Secrets:
-            - Name: WP_SECRETS
-              ValueFrom: !Ref SecretsArn
+            - Name: WP_DB_NAME
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbname"
+            - Name: WP_DB_USER
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbuser"
+            - Name: WP_DB_PASSWORD
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbpassword"
+            - Name: WP_AUTH_KEY
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/authkey"
+            - Name: WP_SECURE_AUTH_KEY
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/secureauthkey"
+            - Name: WP_LOGGED_IN_KEY
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/loggedinkey"
+            - Name: WP_NONCE_KEY
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/noncekey"
+            - Name: WP_AUTH_SALT
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/authsalt"
+            - Name: WP_SECURE_AUTH_SALT
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/secureauthsalt"
+            - Name: WP_LOGGED_IN_SALT
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/loggedinsalt"
+            - Name: WP_NONCE_SALT
+              ValueFrom: !Sub "/wordpress/secrets/${Environment}/noncesalt"
+
+
 
 ##
 # Elasticache
@@ -358,9 +377,9 @@ Resources:
     Properties:
       Engine: aurora
       EngineMode: serverless
-      DatabaseName: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_NAME}}"
-      MasterUsername: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_USER}}"
-      MasterUserPassword: !Sub "{{resolve:secretsmanager:${SecretsArn}:SecretString:WP_DB_PASSWORD}}"
+      DatabaseName: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbname}}"
+      MasterUsername: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbuser}}"
+      MasterUserPassword: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbpassword}}"
       ScalingConfiguration:
         AutoPause: false
         MinCapacity: 4
