@@ -74,6 +74,10 @@ Resources:
         - IpProtocol: tcp
           FromPort: 6379
           ToPort: 6379
+          CidrIp: "10.2.0.0/16"
+      SecurityGroupEgress: 
+        - CidrIp: "10.2.0.0/16"
+          IpProtocol: "-1"
 
   EC2SecurityGroupContainer:
     Type: AWS::EC2::SecurityGroup
@@ -171,7 +175,7 @@ Resources:
             - Name: S3_UPLOADS_SECRET
               Value: !GetAtt IAMAccessKeyS3.SecretAccessKey
             - Name: S3_UPLOADS_REGION
-              Value: eu-central-1
+              Value: !Ref AWS::Region
             - Name: ENV
               Value: !Ref Environment
           Secrets:
@@ -382,3 +386,16 @@ Resources:
     Properties:
       AccessControl: PublicRead
       BucketName: files-dockertest.helsingborg.io
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Sub "${S3Bucket}/*"
+            Principal: '*'
