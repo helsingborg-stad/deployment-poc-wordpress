@@ -284,8 +284,17 @@ Resources:
             Action: ["sts:AssumeRole"]
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
-
+      Policies:
+        - PolicyName: 'GetSSMParameter'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - ssm:ssm:GetParameters
+                  - ssm:ssm:GetParameter
+                Resource: "*"
+                
   IAMRoleTaskDefinition:
     Type: AWS::IAM::Role
     Properties:

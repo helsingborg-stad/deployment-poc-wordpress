@@ -380,6 +380,7 @@ Resources:
                  - rds:*
                  - s3:*
                  - elasticache:*
+                 - ssm:*
                Resource: "*"
 
 ##
