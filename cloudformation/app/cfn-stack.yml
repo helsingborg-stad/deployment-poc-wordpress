@@ -291,8 +291,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: 
-                  - ssm:ssm:GetParameters
-                  - ssm:ssm:GetParameter
+                  - ssm:*
                 Resource: "*"
                 
   IAMRoleTaskDefinition:
