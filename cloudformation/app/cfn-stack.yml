@@ -13,398 +13,398 @@ Resources:
 ##
 # ApplicationAutoScaling
 ##
-  ApplicationAutoScalingScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    DependsOn: ECSService
-    Properties:
-      RoleARN: !GetAtt IAMRoleAutoScaling.Arn
-      ResourceId: !Sub "service/${ECSCluster}/${ECSService.Name}"
-      ServiceNamespace: ecs
-      ScalableDimension: ecs:service:DesiredCount
-      MinCapacity: 3
-      MaxCapacity: 5
+#   ApplicationAutoScalingScalableTarget:
+#     Type: AWS::ApplicationAutoScaling::ScalableTarget
+#     DependsOn: ECSService
+#     Properties:
+#       RoleARN: !GetAtt IAMRoleAutoScaling.Arn
+#       ResourceId: !Sub "service/${ECSCluster}/${ECSService.Name}"
+#       ServiceNamespace: ecs
+#       ScalableDimension: ecs:service:DesiredCount
+#       MinCapacity: 3
+#       MaxCapacity: 5
 
-  ApplicationAutoScalingScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref ApplicationAutoScalingScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ECSServiceAverageCPUUtilization
-        TargetValue: 75.0
-
-
-
-##
-# EC2
-##   
-  ECSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: ECS task security group
-      GroupName: !Sub "${AWS::StackName}-ecs-task-sg"
-      VpcId:
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
-      SecurityGroupIngress:
-        - SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
-          IpProtocol: "-1"
-
-  EC2SecurityGroupPublicLoadBalancer:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Access to the public facing load balancer
-      VpcId: 
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
-      SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
-          IpProtocol: "-1"
-
-  EC2SecurityGroupElasticache:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Elasticache Security Group
-      VpcId: 
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
-          CidrIp: "10.2.0.0/16"
-      SecurityGroupEgress: 
-        - CidrIp: "10.2.0.0/16"
-          IpProtocol: "-1"
-
-  EC2SecurityGroupContainer:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Container Security Group
-      VpcId: 
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
-
-  EC2SecurityGroupRDS:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: RDS Security Group
-      VpcId: 
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp: "10.2.0.0/16"
-      SecurityGroupEgress: 
-        - CidrIp: "10.2.0.0/16"
-          IpProtocol: "-1"
-
-##
-# ECS
-##
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: !Sub "${AWS::StackName}-cluster"
-
-  ECSService:
-    Type: AWS::ECS::Service
-    DependsOn: ElasticLoadBalancingV2Listener
-    Properties:
-      Cluster: !GetAtt ECSCluster.Arn
-      LaunchType: FARGATE
-      ServiceName: !Sub "${AWS::StackName}"
-      HealthCheckGracePeriodSeconds: 60
-      # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
-      TaskDefinition: !Ref ECSTaskDefinition
-      EnableExecuteCommand: true
-      DesiredCount: 1
-      LoadBalancers:
-        - ContainerName: php-fpm
-          ContainerPort: 80
-          TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          # change to DISABLED if you're using private subnets that have access to a NAT gateway
-          AssignPublicIp: ENABLED
-          Subnets:
-            - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
-            - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
-          SecurityGroups:
-            - !Ref EC2SecurityGroupContainer
-
-  ECSTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      ExecutionRoleArn: !GetAtt IAMRoleTaskExecution.Arn
-      TaskRoleArn: !Ref IAMRoleTaskDefinition
-      Family: !Sub "${AWS::StackName}"
-      Cpu: "512"
-      Memory: "1024"
-      NetworkMode: awsvpc
-      ContainerDefinitions:
-        - Name: php-fpm
-          Image: !Ref PHPFPMImage
-          PortMappings:
-            - ContainerPort: 80
-          ReadonlyRootFilesystem: false
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-region: !Ref AWS::Region
-              awslogs-group: !Ref LogsLogGroup
-              awslogs-stream-prefix: php-fpm
-          Environment:
-            - Name: WP_DOMAIN_CURRENT_SITE
-              Value: dockertest.helsingborg.io
-            - Name: WP_DB_HOST
-              Value: !GetAtt RDSDBCluster.Endpoint.Address
-            - Name: WP_REDIS_HOST
-              Value: !GetAtt ElasticacheCluster.RedisEndpoint.Address
-            - Name: S3_UPLOADS_BUCKET
-              Value: !Ref S3Bucket
-            - Name: S3_UPLOADS_KEY
-              Value: !Ref IAMAccessKeyS3
-            - Name: S3_UPLOADS_SECRET
-              Value: !GetAtt IAMAccessKeyS3.SecretAccessKey
-            - Name: S3_UPLOADS_REGION
-              Value: !Ref AWS::Region
-            - Name: ENV
-              Value: !Ref Environment
-          Secrets:
-            - Name: WP_DB_NAME
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbname"
-            - Name: WP_DB_USER
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbuser"
-            - Name: WP_DB_PASSWORD
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbpassword"
-            - Name: WP_AUTH_KEY
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/authkey"
-            - Name: WP_SECURE_AUTH_KEY
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/secureauthkey"
-            - Name: WP_LOGGED_IN_KEY
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/loggedinkey"
-            - Name: WP_NONCE_KEY
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/noncekey"
-            - Name: WP_AUTH_SALT
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/authsalt"
-            - Name: WP_SECURE_AUTH_SALT
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/secureauthsalt"
-            - Name: WP_LOGGED_IN_SALT
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/loggedinsalt"
-            - Name: WP_NONCE_SALT
-              ValueFrom: !Sub "/wordpress/secrets/${Environment}/noncesalt"
+#   ApplicationAutoScalingScalingPolicy:
+#     Type: AWS::ApplicationAutoScaling::ScalingPolicy
+#     Properties:
+#       PolicyName: !Sub "${AWS::StackName}-auto-scaling-policy"
+#       PolicyType: TargetTrackingScaling
+#       ScalingTargetId: !Ref ApplicationAutoScalingScalableTarget
+#       TargetTrackingScalingPolicyConfiguration:
+#         PredefinedMetricSpecification:
+#           PredefinedMetricType: ECSServiceAverageCPUUtilization
+#         TargetValue: 75.0
 
 
 
-##
-# Elasticache
-##
-  ElasticacheCluster:
-    Type: AWS::ElastiCache::CacheCluster
-    Properties:    
-      Engine: redis
-      EngineVersion: 6.x
-      CacheNodeType: cache.t2.micro
-      NumCacheNodes: 1
-      CacheSubnetGroupName: !Ref ElastiCacheSubnetGroup
-      VpcSecurityGroupIds:
-        - !GetAtt EC2SecurityGroupElasticache.GroupId
+# ##
+# # EC2
+# ##   
+#   ECSSecurityGroup:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: ECS task security group
+#       GroupName: !Sub "${AWS::StackName}-ecs-task-sg"
+#       VpcId:
+#         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+#       SecurityGroupIngress:
+#         - SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
+#           IpProtocol: "-1"
 
-  ElastiCacheSubnetGroup:
-    Type: AWS::ElastiCache::SubnetGroup
-    Properties:
-      Description: Cache Subnet Group
-      SubnetIds: 
-        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
-        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
+#   EC2SecurityGroupPublicLoadBalancer:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: Access to the public facing load balancer
+#       VpcId: 
+#         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+#       SecurityGroupIngress:
+#         - CidrIp: 0.0.0.0/0
+#           IpProtocol: "-1"
+
+#   EC2SecurityGroupElasticache:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: Elasticache Security Group
+#       VpcId: 
+#         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+#       SecurityGroupIngress:
+#         - IpProtocol: tcp
+#           FromPort: 6379
+#           ToPort: 6379
+#           CidrIp: "10.2.0.0/16"
+#       SecurityGroupEgress: 
+#         - CidrIp: "10.2.0.0/16"
+#           IpProtocol: "-1"
+
+#   EC2SecurityGroupContainer:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: Container Security Group
+#       VpcId: 
+#         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+#       SecurityGroupIngress:
+#         - IpProtocol: tcp
+#           FromPort: 80
+#           ToPort: 80
+#           SourceSecurityGroupId: !Ref EC2SecurityGroupPublicLoadBalancer
+
+#   EC2SecurityGroupRDS:
+#     Type: AWS::EC2::SecurityGroup
+#     Properties:
+#       GroupDescription: RDS Security Group
+#       VpcId: 
+#         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+#       SecurityGroupIngress:
+#         - IpProtocol: tcp
+#           FromPort: 3306
+#           ToPort: 3306
+#           CidrIp: "10.2.0.0/16"
+#       SecurityGroupEgress: 
+#         - CidrIp: "10.2.0.0/16"
+#           IpProtocol: "-1"
+
+# ##
+# # ECS
+# ##
+#   ECSCluster:
+#     Type: AWS::ECS::Cluster
+#     Properties:
+#       ClusterName: !Sub "${AWS::StackName}-cluster"
+
+#   ECSService:
+#     Type: AWS::ECS::Service
+#     DependsOn: ElasticLoadBalancingV2Listener
+#     Properties:
+#       Cluster: !GetAtt ECSCluster.Arn
+#       LaunchType: FARGATE
+#       ServiceName: !Sub "${AWS::StackName}"
+#       HealthCheckGracePeriodSeconds: 60
+#       # For CloudFormation not to get stuck during AWS::ECS::Service specify the task ARN
+#       TaskDefinition: !Ref ECSTaskDefinition
+#       EnableExecuteCommand: true
+#       DesiredCount: 1
+#       LoadBalancers:
+#         - ContainerName: php-fpm
+#           ContainerPort: 80
+#           TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
+#       NetworkConfiguration:
+#         AwsvpcConfiguration:
+#           # change to DISABLED if you're using private subnets that have access to a NAT gateway
+#           AssignPublicIp: ENABLED
+#           Subnets:
+#             - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+#             - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
+#           SecurityGroups:
+#             - !Ref EC2SecurityGroupContainer
+
+#   ECSTaskDefinition:
+#     Type: AWS::ECS::TaskDefinition
+#     Properties:
+#       ExecutionRoleArn: !GetAtt IAMRoleTaskExecution.Arn
+#       TaskRoleArn: !Ref IAMRoleTaskDefinition
+#       Family: !Sub "${AWS::StackName}"
+#       Cpu: "512"
+#       Memory: "1024"
+#       NetworkMode: awsvpc
+#       ContainerDefinitions:
+#         - Name: php-fpm
+#           Image: !Ref PHPFPMImage
+#           PortMappings:
+#             - ContainerPort: 80
+#           ReadonlyRootFilesystem: false
+#           LogConfiguration:
+#             LogDriver: awslogs
+#             Options:
+#               awslogs-region: !Ref AWS::Region
+#               awslogs-group: !Ref LogsLogGroup
+#               awslogs-stream-prefix: php-fpm
+#           Environment:
+#             - Name: WP_DOMAIN_CURRENT_SITE
+#               Value: dockertest.helsingborg.io
+#             - Name: WP_DB_HOST
+#               Value: !GetAtt RDSDBCluster.Endpoint.Address
+#             - Name: WP_REDIS_HOST
+#               Value: !GetAtt ElasticacheCluster.RedisEndpoint.Address
+#             - Name: S3_UPLOADS_BUCKET
+#               Value: !Ref S3Bucket
+#             - Name: S3_UPLOADS_KEY
+#               Value: !Ref IAMAccessKeyS3
+#             - Name: S3_UPLOADS_SECRET
+#               Value: !GetAtt IAMAccessKeyS3.SecretAccessKey
+#             - Name: S3_UPLOADS_REGION
+#               Value: !Ref AWS::Region
+#             - Name: ENV
+#               Value: !Ref Environment
+#           Secrets:
+#             - Name: WP_DB_NAME
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbname"
+#             - Name: WP_DB_USER
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbuser"
+#             - Name: WP_DB_PASSWORD
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/dbpassword"
+#             - Name: WP_AUTH_KEY
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/authkey"
+#             - Name: WP_SECURE_AUTH_KEY
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/secureauthkey"
+#             - Name: WP_LOGGED_IN_KEY
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/loggedinkey"
+#             - Name: WP_NONCE_KEY
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/noncekey"
+#             - Name: WP_AUTH_SALT
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/authsalt"
+#             - Name: WP_SECURE_AUTH_SALT
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/secureauthsalt"
+#             - Name: WP_LOGGED_IN_SALT
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/loggedinsalt"
+#             - Name: WP_NONCE_SALT
+#               ValueFrom: !Sub "/wordpress/secrets/${Environment}/noncesalt"
+
+
+
+# ##
+# # Elasticache
+# ##
+#   ElasticacheCluster:
+#     Type: AWS::ElastiCache::CacheCluster
+#     Properties:    
+#       Engine: redis
+#       EngineVersion: 6.x
+#       CacheNodeType: cache.t2.micro
+#       NumCacheNodes: 1
+#       CacheSubnetGroupName: !Ref ElastiCacheSubnetGroup
+#       VpcSecurityGroupIds:
+#         - !GetAtt EC2SecurityGroupElasticache.GroupId
+
+#   ElastiCacheSubnetGroup:
+#     Type: AWS::ElastiCache::SubnetGroup
+#     Properties:
+#       Description: Cache Subnet Group
+#       SubnetIds: 
+#         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+#         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
         
 
-##
-# ElasticLoadBalancingV2
-##
-  ElasticLoadBalancingV2LoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Scheme: internet-facing
-      LoadBalancerAttributes:
-      - Key: idle_timeout.timeout_seconds
-        Value: "30"
-      Subnets:
-        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
-        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
-      SecurityGroups: 
-        - !Ref EC2SecurityGroupPublicLoadBalancer
+# ##
+# # ElasticLoadBalancingV2
+# ##
+#   ElasticLoadBalancingV2LoadBalancer:
+#     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+#     Properties:
+#       Scheme: internet-facing
+#       LoadBalancerAttributes:
+#       - Key: idle_timeout.timeout_seconds
+#         Value: "30"
+#       Subnets:
+#         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+#         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
+#       SecurityGroups: 
+#         - !Ref EC2SecurityGroupPublicLoadBalancer
 
-  ElasticLoadBalancingV2Listener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
-          Type: forward
-      LoadBalancerArn: !Ref ElasticLoadBalancingV2LoadBalancer
-      Port: 80
-      Protocol: HTTP
+#   ElasticLoadBalancingV2Listener:
+#     Type: AWS::ElasticLoadBalancingV2::Listener
+#     Properties:
+#       DefaultActions:
+#         - TargetGroupArn: !Ref ElasticLoadBalancingV2TargetGroup
+#           Type: forward
+#       LoadBalancerArn: !Ref ElasticLoadBalancingV2LoadBalancer
+#       Port: 80
+#       Protocol: HTTP
         
-  ElasticLoadBalancingV2TargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckIntervalSeconds: 61
-      HealthCheckPath: /health.php
-      HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 60
-      HealthyThresholdCount: 2
-      Port: 80
-      Protocol: HTTP
-      UnhealthyThresholdCount: 2
-      TargetGroupAttributes:
-        - Key: deregistration_delay.timeout_seconds
-          Value: "60"
-      TargetType: ip
-      VpcId: 
-        Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
+#   ElasticLoadBalancingV2TargetGroup:
+#     Type: AWS::ElasticLoadBalancingV2::TargetGroup
+#     Properties:
+#       HealthCheckIntervalSeconds: 61
+#       HealthCheckPath: /health.php
+#       HealthCheckProtocol: HTTP
+#       HealthCheckTimeoutSeconds: 60
+#       HealthyThresholdCount: 2
+#       Port: 80
+#       Protocol: HTTP
+#       UnhealthyThresholdCount: 2
+#       TargetGroupAttributes:
+#         - Key: deregistration_delay.timeout_seconds
+#           Value: "60"
+#       TargetType: ip
+#       VpcId: 
+#         Fn::ImportValue: infrastructure-poc-wordpress-vpc-VPCID
 
 
 
-##
-# IAM
-##      
-  IAMRoleTaskExecution:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ecs-tasks.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-      Policies:
-        - PolicyName: 'GetSSMParameter'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: 
-                  - ssm:*
-                Resource: "*"
+# ##
+# # IAM
+# ##      
+#   IAMRoleTaskExecution:
+#     Type: AWS::IAM::Role
+#     Properties:
+#       AssumeRolePolicyDocument:
+#         Statement:
+#           - Effect: Allow
+#             Principal:
+#               Service: [ecs-tasks.amazonaws.com]
+#             Action: ["sts:AssumeRole"]
+#       ManagedPolicyArns:
+#         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+#       Policies:
+#         - PolicyName: 'GetSSMParameter'
+#           PolicyDocument:
+#             Version: '2012-10-17'
+#             Statement:
+#               - Effect: Allow
+#                 Action: 
+#                   - ssm:*
+#                 Resource: "*"
                 
-  IAMRoleTaskDefinition:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ecs-tasks.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      Policies:
-        - PolicyName: 'ExecuteCommandPermissions'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: 
-                  - ssmmessages:CreateControlChannel
-                  - ssmmessages:OpenControlChannel
-                  - ssmmessages:CreateDataChannel
-                  - ssmmessages:OpenDataChannel
-                Resource: "*"
+#   IAMRoleTaskDefinition:
+#     Type: AWS::IAM::Role
+#     Properties:
+#       AssumeRolePolicyDocument:
+#         Statement:
+#           - Effect: Allow
+#             Principal:
+#               Service: [ecs-tasks.amazonaws.com]
+#             Action: ["sts:AssumeRole"]
+#       Policies:
+#         - PolicyName: 'ExecuteCommandPermissions'
+#           PolicyDocument:
+#             Version: '2012-10-17'
+#             Statement:
+#               - Effect: Allow
+#                 Action: 
+#                   - ssmmessages:CreateControlChannel
+#                   - ssmmessages:OpenControlChannel
+#                   - ssmmessages:CreateDataChannel
+#                   - ssmmessages:OpenDataChannel
+#                 Resource: "*"
 
-  IAMRoleAutoScaling:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [application-autoscaling.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
+#   IAMRoleAutoScaling:
+#     Type: AWS::IAM::Role
+#     Properties:
+#       AssumeRolePolicyDocument:
+#         Statement:
+#           - Effect: Allow
+#             Principal:
+#               Service: [application-autoscaling.amazonaws.com]
+#             Action: ["sts:AssumeRole"]
+#       ManagedPolicyArns:
+#         - 'arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole'
 
-  IAMUserS3:
-    Type: AWS::IAM::User
-    Properties:
-      Policies:
-        - PolicyName: S3BucketPolicy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Sid: BucketObjects
-                Action:
-                  - s3:AbortMultipartUpload
-                  - s3:DeleteObject
-                  - s3:GetBucketAcl
-                  - s3:GetBucketLocation
-                  - s3:GetBucketPolicy
-                  - s3:GetObject
-                  - s3:GetObjectAcl
-                  - s3:ListBucket
-                  - s3:ListBucketMultipartUploads
-                  - s3:ListMultipartUploadParts
-                  - s3:PutObject
-                  - s3:PutObjectAcl
-                Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
-              - Effect: Allow
-                Sid: BucketList
-                Action:
-                  - s3:ListBucket
-                Resource: !Sub "arn:aws:s3:::${S3Bucket}"
+#   IAMUserS3:
+#     Type: AWS::IAM::User
+#     Properties:
+#       Policies:
+#         - PolicyName: S3BucketPolicy
+#           PolicyDocument:
+#             Version: 2012-10-17
+#             Statement:
+#               - Effect: Allow
+#                 Sid: BucketObjects
+#                 Action:
+#                   - s3:AbortMultipartUpload
+#                   - s3:DeleteObject
+#                   - s3:GetBucketAcl
+#                   - s3:GetBucketLocation
+#                   - s3:GetBucketPolicy
+#                   - s3:GetObject
+#                   - s3:GetObjectAcl
+#                   - s3:ListBucket
+#                   - s3:ListBucketMultipartUploads
+#                   - s3:ListMultipartUploadParts
+#                   - s3:PutObject
+#                   - s3:PutObjectAcl
+#                 Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+#               - Effect: Allow
+#                 Sid: BucketList
+#                 Action:
+#                   - s3:ListBucket
+#                 Resource: !Sub "arn:aws:s3:::${S3Bucket}"
 
-  IAMAccessKeyS3:
-    Type: AWS::IAM::AccessKey
-    Properties: 
-      UserName: !Ref IAMUserS3
-
-
-
-##
-# Logs
-##
-  LogsLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "${AWS::StackName}"
-      RetentionInDays: 14
+#   IAMAccessKeyS3:
+#     Type: AWS::IAM::AccessKey
+#     Properties: 
+#       UserName: !Ref IAMUserS3
 
 
 
-##
-# RDS
-##
+# ##
+# # Logs
+# ##
+#   LogsLogGroup:
+#     Type: AWS::Logs::LogGroup
+#     Properties:
+#       LogGroupName: !Sub "${AWS::StackName}"
+#       RetentionInDays: 14
 
-  RDSDBCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      Engine: aurora
-      EngineMode: serverless
-      DatabaseName: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbname}}"
-      MasterUsername: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbuser}}"
-      MasterUserPassword: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbpassword}}"
-      ScalingConfiguration:
-        AutoPause: false
-        MinCapacity: 4
-        MaxCapacity: 32
-      VpcSecurityGroupIds:
-        - !Ref EC2SecurityGroupRDS
-      DBSubnetGroupName:
-        !Ref RDSDBSubnetGroup
-      EnableHttpEndpoint: true
 
-  RDSDBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties: 
-      DBSubnetGroupDescription: Subnet group for RDS
-      SubnetIds: 
-        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
-        - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
+
+# ##
+# # RDS
+# ##
+
+#   RDSDBCluster:
+#     Type: AWS::RDS::DBCluster
+#     Properties:
+#       Engine: aurora
+#       EngineMode: serverless
+#       DatabaseName: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbname}}"
+#       MasterUsername: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbuser}}"
+#       MasterUserPassword: !Sub "{{resolve:ssm:/wordpress/secrets/${Environment}/dbpassword}}"
+#       ScalingConfiguration:
+#         AutoPause: false
+#         MinCapacity: 4
+#         MaxCapacity: 32
+#       VpcSecurityGroupIds:
+#         - !Ref EC2SecurityGroupRDS
+#       DBSubnetGroupName:
+#         !Ref RDSDBSubnetGroup
+#       EnableHttpEndpoint: true
+
+#   RDSDBSubnetGroup:
+#     Type: AWS::RDS::DBSubnetGroup
+#     Properties: 
+#       DBSubnetGroupDescription: Subnet group for RDS
+#       SubnetIds: 
+#         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet1
+#         - Fn::ImportValue: infrastructure-poc-wordpress-vpc-PublicSubnet2
 ##
 # S3
 ##
@@ -426,3 +426,4 @@ Resources:
             Effect: Allow
             Resource: !Sub "${S3Bucket.Arn}/*"
             Principal: "*"
+            
